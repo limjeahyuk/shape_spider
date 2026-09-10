@@ -1,21 +1,20 @@
 # Shape Spider — 기술 설계 문서
 
-> 기획서 원본: https://lim-it.vercel.app/posts/shapespider/
 > 이 문서는 기획서를 **구현 관점**으로 옮긴 것이다. 게임 룰 자체의 최종 정의는 `GAME_RULES.md`를 따른다.
 
 ---
 
 ## 1. 확정된 설계 결정
 
-| 항목 | 결정 | 근거 |
-|---|---|---|
-| 렌더링 | **DOM + CSS Grid** (Canvas·게임엔진 미사용) | 10×10 = 100셀, 실시간 렌더 루프 불필요. 잘린 모양·구멍 뚫린 모양을 셀 단위로 그리므로 도형이 분해돼도 렌더링 변화 없음 |
-| 스택 | Vite + React 19 + TypeScript | 클라이언트 전용 SPA. 백엔드·SSR 요구 없음 |
-| 보드 모델 | **칸(cell) 단위 소유권** | 정사각형 추출 시 배치된 도형이 잘리므로, 도형 단위 모델은 성립하지 않음 |
-| 추출 위치 | **유저가 직접 선택** | 7×8에서 4×4를 뽑는 위치가 20가지 → 전략의 핵심 |
-| 선택 규칙 | **목적지가 규칙을 결정한다** | 하이라이트 모호성 제거 (아래 2절) |
-| 조작 | 탭으로 프레임 소환 → 드래그로 조정 → 확정 | 더블클릭은 모바일 줌 충돌로 배제 |
-| 입력 | **Pointer Events** | 마우스·터치 단일 코드. HTML5 Drag&Drop API는 터치 미지원이라 사용 금지 |
+| 항목      | 결정                                        | 근거                                                                                                                   |
+| --------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 렌더링    | **DOM + CSS Grid** (Canvas·게임엔진 미사용) | 10×10 = 100셀, 실시간 렌더 루프 불필요. 잘린 모양·구멍 뚫린 모양을 셀 단위로 그리므로 도형이 분해돼도 렌더링 변화 없음 |
+| 스택      | Vite + React 19 + TypeScript                | 클라이언트 전용 SPA. 백엔드·SSR 요구 없음                                                                              |
+| 보드 모델 | **칸(cell) 단위 소유권**                    | 정사각형 추출 시 배치된 도형이 잘리므로, 도형 단위 모델은 성립하지 않음                                                |
+| 추출 위치 | **유저가 직접 선택**                        | 7×8에서 4×4를 뽑는 위치가 20가지 → 전략의 핵심                                                                         |
+| 선택 규칙 | **목적지가 규칙을 결정한다**                | 하이라이트 모호성 제거 (아래 2절)                                                                                      |
+| 조작      | 탭으로 프레임 소환 → 드래그로 조정 → 확정   | 더블클릭은 모바일 줌 충돌로 배제                                                                                       |
+| 입력      | **Pointer Events**                          | 마우스·터치 단일 코드. HTML5 Drag&Drop API는 터치 미지원이라 사용 금지                                                 |
 
 ---
 
@@ -23,10 +22,10 @@
 
 판 위에서 "무엇을 뽑을지"를 유저가 지정하려 하면 모호해진다. **목적지를 먼저 정하면 규칙이 유일해진다.**
 
-| 목적지 | 선택 규칙 | 유저가 정하는 것 |
-|---|---|---|
-| **수집함** | 해당 색의 다음 목표 `N×N` | 위치만 |
-| **보관함** *(도입 시)* | 연결된 같은 색 덩어리 **전체** | 없음 (자동 결정) |
+| 목적지                 | 선택 규칙                      | 유저가 정하는 것 |
+| ---------------------- | ------------------------------ | ---------------- |
+| **수집함**             | 해당 색의 다음 목표 `N×N`      | 위치만           |
+| **보관함** _(도입 시)_ | 연결된 같은 색 덩어리 **전체** | 없음 (자동 결정) |
 
 이 원칙 덕분에 보관함 도입 여부를 나중에 결정해도 구조가 흔들리지 않는다.
 선택 로직을 `(board, startCell, destination) → Coord[]` 형태의 **교체 가능한 함수**로 분리하고,
@@ -37,9 +36,9 @@
 ## 3. 데이터 모델
 
 ```ts
-type ColorId = number;              // 0..colorCount-1
-type PieceId = number;              // 배치된 도형의 고유 ID
-type Coord   = { r: number; c: number };
+type ColorId = number; // 0..colorCount-1
+type PieceId = number; // 배치된 도형의 고유 ID
+type Coord = { r: number; c: number };
 
 // ── 보드 ───────────────────────────────────────────────
 type Cell = { color: ColorId; pieceId: PieceId } | null;
@@ -47,7 +46,7 @@ type Cell = { color: ColorId; pieceId: PieceId } | null;
 interface Board {
   rows: number;
   cols: number;
-  cells: Cell[];                    // 길이 rows*cols, index = r * cols + c
+  cells: Cell[]; // 길이 rows*cols, index = r * cols + c
 }
 ```
 
@@ -60,8 +59,8 @@ interface Board {
 // ── 도형 / 덱 ──────────────────────────────────────────
 interface PieceShape {
   id: string;
-  cells: Coord[];                   // 정규화: min(r)=0, min(c)=0
-  size: number;                     // cells.length
+  cells: Coord[]; // 정규화: min(r)=0, min(c)=0
+  size: number; // cells.length
 }
 
 interface Card {
@@ -71,47 +70,76 @@ interface Card {
 }
 
 interface Deck {
-  pending: Card[];                  // 아직 제시되지 않은 카드 (덱 순서)
-  hand: Card[];                     // 현재 제시된 카드 (기본 5장)
-  recycled: Card[];                 // 미사용으로 넘어간 카드 (덱 소진 후 재구성용)
+  pending: Card[]; // 아직 제시되지 않은 카드 (초기 덱 순서 유지)
+  hand: Card[]; // 현재 제시된 카드 (기본 handSize장)
+  recycled: Card[]; // 넘긴 카드. 원래 덱 순서를 유지하며 섞지 않는다
+  recycleCount: number; // 덱 재구성 횟수. 감점 기준
 }
 
 // ── 수집함 ─────────────────────────────────────────────
 interface CollectionTrack {
   color: ColorId;
-  nextSize: number | null;          // 다음에 넣어야 할 크기. null이면 해당 색 완료
-  collected: number[];              // 완료한 크기 목록 [3, 4, ...]
+  nextSize: number | null; // 다음에 넣어야 할 크기. null이면 해당 색 완료
+  collected: number[]; // 완료한 크기 목록 [3, 4, ...]
 }
 
 // ── 보관함 (도입 시) ───────────────────────────────────
 interface Storage {
-  slot: { color: ColorId; cells: Coord[] } | null;   // 한 조각만
+  slot: { color: ColorId; cells: Coord[] } | null; // 한 조각만
 }
 
 // ── 선택 상태 ──────────────────────────────────────────
 type Selection =
-  | { kind: 'collect'; color: ColorId; size: number; anchor: Coord; valid: boolean }
-  | { kind: 'store';   color: ColorId; cells: Coord[] };
+  | {
+      kind: "collect";
+      color: ColorId;
+      size: number;
+      anchor: Coord;
+      valid: boolean;
+    }
+  | { kind: "store"; color: ColorId; cells: Coord[] };
 
 // ── 전체 상태 ──────────────────────────────────────────
 interface GameConfig {
-  rows: number;                     // 기본 10
-  cols: number;                     // 기본 10
-  colorCount: number;               // 기본 4
-  targetSizes: number[];            // 기본 [3,4,5,6,7,8]
-  handSize: number;                 // 기본 5
+  rows: number; // 기본 10
+  cols: number; // 기본 10
+  colorCount: number; // 기본 4
+  targetSizes: number[]; // 기본 [3,4,5,6,7,8]
+  handSize: number; // 기본 5
   storageEnabled: boolean;
+  maxRecycles: number | null; // 재구성 상한. null이면 무제한
+  scoring: ScoringConfig;
+}
+
+// 값은 전부 미정. GAME_RULES.md 「점수」 절 참조
+interface ScoringConfig {
+  squareScore: Record<number, number>; // 크기별 배점 { 3: n, 4: n, ... }
+  recyclePenalty: number; // 재구성 1회당 감점
+  clearBonus: number; // 전량 완성 보너스
+  allowNegative: boolean; // 총점 음수 허용 여부
+}
+
+interface Score {
+  collected: number; // 정사각형 완성 누적
+  penalty: number; // 재구성 감점 누적
+  bonus: number; // 전량 완성 보너스
+  total: number; // collected - penalty + bonus
 }
 
 interface GameState {
   config: GameConfig;
   board: Board;
   deck: Deck;
-  collection: CollectionTrack[];    // 색상별
+  collection: CollectionTrack[]; // 색상별
   storage: Storage;
   selection: Selection | null;
-  status: 'playing' | 'won' | 'stuck';
+  score: Score;
+  prev: Snapshot | null; // 1단계 되돌리기용 직전 스냅샷
+  status: "playing" | "cleared" | "stuck";
 }
+
+// 되돌리기는 1단계뿐이므로 스냅샷을 중첩 보관하지 않는다
+type Snapshot = Omit<GameState, "prev" | "selection">;
 ```
 
 ---
@@ -119,43 +147,45 @@ interface GameState {
 ## 4. 상태 흐름
 
 ```
-   ┌──────────────┐
-   │  카드 제시    │  hand ← pending에서 handSize장
-   └──────┬───────┘
-          │
-          ▼
-   ┌──────────────┐   배치 가능한 카드가 하나도 없음
-   │  도형 배치    │ ─────────────────────────────► status = 'stuck'
-   │  (재배치 불가)│
-   └──────┬───────┘
-          │ hand 소진             ┌─────────────────────┐
-          ├──────────────────────►│ 미사용 카드 → recycled│
-          │                       └──────────┬──────────┘
-          │                                  │ pending 소진 시
-          │                                  │ recycled → pending 재구성
-          ▼                                  ▼
-   ┌──────────────────────────────────────────────────┐
-   │  정사각형 추출 (언제든 가능)                        │
-   │   1. 색 칸 탭 → N×N 프레임 소환 (유효 위치로 스냅)   │
-   │   2. 드래그로 위치 조정 (실시간 유효성 표시)         │
-   │   3. 확정 → 해당 칸 null, 수집함에 기록             │
-   └──────────────────────────────────────────────────┘
-          │ 모든 색 targetSizes 완료
-          ▼
-      status = 'won'
+카드 제시 — pending에서 handSize장을 hand로
+   │
+   ▼
+배치 — 손패 중 원하는 것만. 0장도 가능. 배치한 도형은 이동·회수 불가
+   │
+   ▼
+손패 넘기기 — 미사용 카드를 recycled로 (원래 덱 순서 유지)
+   │
+   ▼
+pending 소진 시 덱 재구성 — recycled → pending. 섞지 않음
+                            recycleCount++, 감점
+   │
+   └──► 다시 카드 제시
+
+정사각형 추출 — 위 흐름과 무관하게 언제든 가능
+   1. 색 칸 탭 → N×N 프레임 소환 (유효 위치로 스냅)
+   2. 드래그로 위치 조정 (실시간 유효성 표시)
+   3. 확정 → 해당 칸 null, 수집함 기록, 점수 가산
+
+종료 판정
+   모든 색 targetSizes 완료                      → 'cleared', 보너스 가산
+   덱 전체(hand + pending + recycled)를 어디에도
+   놓을 수 없고 추출 가능한 정사각형도 없음        → 'stuck'
+   어느 쪽이든 그때까지의 점수가 최종 점수가 된다
 ```
 
 ### 액션 목록
 
-| 액션 | 페이로드 | 설명 |
-|---|---|---|
-| `DRAW_HAND` | — | pending에서 handSize장 제시 |
-| `PLACE_PIECE` | `{ handIndex, anchor }` | 도형을 판에 고정 (되돌리기 없음) |
-| `RECYCLE_HAND` | — | 미사용 카드를 recycled로 이동 후 재제시 |
-| `BEGIN_SELECTION` | `{ cell, destination }` | 프레임 소환. destination이 규칙 결정 |
-| `MOVE_SELECTION` | `{ anchor }` | 프레임 이동 (칸 단위 변화 시에만 재계산) |
-| `CONFIRM_SELECTION` | — | 추출 실행 |
-| `CANCEL_SELECTION` | — | 프레임 해제 |
+| 액션                | 페이로드                | 설명                                                     |
+| ------------------- | ----------------------- | -------------------------------------------------------- |
+| `DRAW_HAND`         | —                       | pending에서 handSize장 제시                              |
+| `PLACE_PIECE`       | `{ handIndex, anchor }` | 도형을 판에 고정                                         |
+| `PASS_HAND`         | —                       | 손패의 미사용 카드를 recycled로 넘기고 새로 제시         |
+| `REBUILD_DECK`      | —                       | pending 소진 시 recycled → pending. recycleCount++, 감점 |
+| `BEGIN_SELECTION`   | `{ cell, destination }` | 프레임 소환. destination이 규칙 결정                     |
+| `MOVE_SELECTION`    | `{ anchor }`            | 프레임 이동 (칸 단위 변화 시에만 재계산)                 |
+| `CONFIRM_SELECTION` | —                       | 추출 실행. 점수 가산                                     |
+| `CANCEL_SELECTION`  | —                       | 프레임 해제                                              |
+| `UNDO`              | —                       | prev 스냅샷 복원. 1단계만, 연속 사용 불가                |
 
 ---
 
@@ -172,7 +202,14 @@ const inBounds = (b: Board, r: number, c: number): boolean => ...;
 // 배치
 canPlace(board: Board, shape: PieceShape, anchor: Coord): boolean;
 place(board: Board, card: Card, anchor: Coord): Board;              // 새 Board 반환
-hasAnyPlacement(board: Board, hand: Card[]): boolean;               // 막힘(stuck) 판정
+// 막힘 판정: 손패가 아니라 덱 전체(hand + pending + recycled)를 본다.
+// 손패는 그냥 넘길 수 있으므로 손패만 보면 오판한다.
+hasAnyPlacement(board: Board, cards: Card[]): boolean;
+isStuck(state: GameState): boolean;   // hasAnyPlacement + 추출 가능 정사각형 없음
+
+// 점수
+scoreSquare(cfg: ScoringConfig, size: number): number;
+applyRecyclePenalty(score: Score, cfg: ScoringConfig): Score;
 
 // 추출
 isUniformSquare(board: Board, color: ColorId, size: number, anchor: Coord): boolean;
@@ -208,6 +245,8 @@ outlineEdges(board: Board, r: number, c: number): Edges;             // 이웃�
                             유효=초록 / 무효=빨강
 <HandTray>                  현재 제시된 카드 5장
 <CollectionPanel>           색상별 다음 목표 + 완료 목록
+<ScorePanel>                현재 점수 + 재구성 횟수
+<UndoButton>                1단계 되돌리기. 사용 가능 여부 표시
 <StoragePanel>              (도입 시)
 ```
 
@@ -217,7 +256,7 @@ outlineEdges(board: Board, r: number, c: number): Edges;             // 이웃�
 ### 터치 관련 필수 처리
 
 1. 보드 컨테이너에 `touch-action: none` — 없으면 드래그가 페이지 스크롤로 먹힌다
-2. 손가락 가림 대응 — 프레임을 터치 지점보다 위로 오프셋하거나 확정 버튼을 둔다
+2. 손가락 가림 대응 — 프레임을 터치 지점보다 위로 오프셋한다. 오조작은 1단계 되돌리기로 구제한다
 3. grab offset 유지 — 처음 잡은 상대 위치를 보존해야 조작감이 안 튄다
 4. 포인터 → 칸 변환은 DOM 탐색 없이 산술로: `Math.floor((e.clientX - rect.left) / cellSize)`
 
@@ -267,16 +306,13 @@ docs/
 
 ---
 
-## 9. 미결정 사항
+## 9. 미결정 사항 (설계 차원)
 
-기획서와 논의에서 아직 확정되지 않은 항목. **`GAME_RULES.md`에 룰이 확정되면 이 절을 정리한다.**
+게임 룰의 미결정 항목은 **`GAME_RULES.md`가 정본이다.** 여기서 중복 관리하지 않는다.
+아래는 룰과 무관한 기술 선택만 남긴다.
 
-- [ ] 보관함 도입 여부 및 규칙 (연결 덩어리 전체 / 직사각형만 / 한 조각 제한)
-- [ ] 보관함에서 꺼내지 못하는 상황의 처리 (회전 허용 / 경고 / 직사각형 제한)
-- [ ] 폴리오미노 카탈로그 확정 (칸 수 범위, 종류, 등장 빈도)
-- [ ] 판 크기 (10×10 vs 확대)
-- [ ] 목표 크기 범위 (8절 참조)
-- [ ] 덱 재구성 규칙의 세부 (recycled 순서 유지 여부, 섞기 여부)
-- [ ] 추출 후 생긴 빈 칸에 재배치 허용 여부
-- [ ] 회전 / 반전 허용 여부
-- [ ] 되돌리기(undo) 제공 여부
+- [ ] 상태 컨테이너 — `useReducer` vs `zustand`
+- [ ] 드래그 구현 — `@dnd-kit/core` 도입 vs Pointer Events 직접 구현
+- [ ] 테스트 도구 — Vitest 도입 여부 및 `core/` 커버리지 기준
+- [ ] 점수 계산 위치 — 각 액션에서 즉시 가산 vs 상태로부터 파생 계산
+- [ ] 되돌리기 스냅샷 범위 — `Snapshot`에서 제외할 필드 확정
