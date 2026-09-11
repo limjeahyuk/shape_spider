@@ -34,3 +34,10 @@ Game Rules: `docs/GAME_RULES.md` 참조
 - `theme.ts` 의 Color를 사용.
   - 만약 새로운 헥사코드를 사용해야하는 상황에서는 Color 내부에 선언 후 사용.
   - 코드에 직접적으로 hex 코드 사용하지 않기.
+
+## Components (`src/components/`)
+
+- `Button` — 목재(`wood`)/황금(`primary`) 질감 버튼. `selected`로 토글 상태, `size`로 md/lg.
+- `IconButton` — 원형 목재 아이콘 버튼. `label`이 aria-label로 들어간다.
+- `Panel` — 목재(`wood`)/녹색(`green`) 질감 컨테이너.
+- `PieceIcon` — 장식용 폴리오미노 아이콘. `[r, c]` 좌표 목록을 CSS Grid로 그린다.
