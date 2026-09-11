@@ -104,10 +104,10 @@ interface GameConfig {
   rows: number; // 기본 10
   cols: number; // 기본 10
   colorCount: number; // 기본 4
-  targetSizes: number[]; // 기본 [3,4,5,6,7,8]
+  targetSizes: number[]; // 잠정 기본값 [3,4,5,6]. 상위 난이도는 [3,4,5,6,7,8]
   handSize: number; // 기본 5
   storageEnabled: boolean;
-  maxRecycles: number | null; // 재구성 상한. null이면 무제한
+  maxRecycles: number | null; // 재구성 상한. 잠정 null(무제한) — 정체 판정으로 종료시킨다
   scoring: ScoringConfig;
 }
 
@@ -206,6 +206,8 @@ place(board: Board, card: Card, anchor: Coord): Board;              // 새 Board
 // 손패는 그냥 넘길 수 있으므로 손패만 보면 오판한다.
 hasAnyPlacement(board: Board, cards: Card[]): boolean;
 isStuck(state: GameState): boolean;   // hasAnyPlacement + 추출 가능 정사각형 없음
+// 정체 판정: 재구성 이후 한 바퀴 동안 한 장도 배치하지 않고 다시 재구성에 도달하면 종료
+isStalled(state: GameState): boolean;
 
 // 점수
 scoreSquare(cfg: ScoringConfig, size: number): number;
@@ -301,8 +303,9 @@ docs/
 5칸 폴리오미노 기준 **약 160장**이 필요하고, 5장씩 제시하면 최소 32턴이다.
 배치 낭비를 감안하면 실제 플레이는 훨씬 길어진다.
 
-**검토안:** 목표 크기 범위를 `3~6`으로 줄이면 색상당 86칸, 총 344칸(약 69장)으로
-한 판이 현실적인 길이가 된다. 8×8까지는 상위 난이도로 두는 편이 나을 수 있다.
+**채택:** 기본 목표 범위를 `3~6`으로 정했다 (`GAME_RULES.md` 잠정값).
+색상당 86칸, 총 344칸이며 낭비를 감안해 덱은 색상당 35장(총 140장)으로 잡는다.
+`3~8`은 상위 난이도로 남긴다.
 
 ---
 
