@@ -29,7 +29,7 @@
   width: 100%;
 }
 
-/* 가운데: 수집함 · 조립 판 · 보관함 · 수집함 */
+/* 가운데: 수집함 · 조립 판 · 보관함 */
 .game__middle {
   display: flex;
   justify-content: center;

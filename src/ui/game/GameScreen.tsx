@@ -323,7 +323,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
 
   const sel = game.selection;
 
-  // 수집함은 보드 양옆에 절반씩 배치한다
+  // 수집함은 모두 보드 왼쪽에 배치한다
   const trays = game.collection.map((track) => (
     <CollectionTray
       key={track.color}
@@ -331,7 +331,6 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       targetSizes={config.targetSizes}
     />
   ));
-  const half = Math.ceil(trays.length / 2);
 
   return (
     <main className="game">
@@ -383,7 +382,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
 
       <section className="game__middle">
         <aside className="game__side game__side--left">
-          {trays.slice(0, half)}
+          {trays}
         </aside>
 
         <Panel tone="wood" className="board">
@@ -424,7 +423,6 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
               onPointerUp={onCardUp}
             />
           )}
-          {trays.slice(half)}
         </aside>
       </section>
 
