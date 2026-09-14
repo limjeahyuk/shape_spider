@@ -6,8 +6,8 @@ import { pieceColor, toIconCells } from "./palette";
 import "./StoragePanel.css";
 
 // 보관 칸 아이콘이 들어갈 정사각 영역(px)과 칸 크기 상한
-const ICON_BOX_PX = 74;
-const MAX_ICON_CELL_PX = 16;
+const ICON_BOX_PX = 120;
+const MAX_ICON_CELL_PX = 22;
 
 // 도형의 긴 변 기준으로 칸 크기를 줄여 슬롯 안에 들어가게 한다 (칸 사이 간격 2px 포함)
 function iconCellSize(cells: { r: number; c: number }[]): number {

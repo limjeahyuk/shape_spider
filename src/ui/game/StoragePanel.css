@@ -15,19 +15,18 @@
 }
 .storage__well {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   padding: 10px;
 }
 .storage__slot {
   box-sizing: border-box;
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 100px;
+  height: 170px;
   border-radius: 6px;
   border: 1px dashed var(--color-slot-empty-border);
   background: var(--color-slot-empty);
