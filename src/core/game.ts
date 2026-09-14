@@ -1,7 +1,7 @@
 import type { Coord, GameConfig, GameState, Snapshot } from "./types";
 import { at, canPlace, connectedGroup, createBoard, extract, place, removeCells, snapToNearestValid, squareCells } from "./board";
 import { createDeck, drawHand, passHand, type Rng } from "./deck";
-import { applyRecyclePenalty, collectTarget, computeTotal, createTracks, isCleared, isStuck, scoreSquare } from "./rules";
+import { addBonus, applyRecyclePenalty, collectTarget, computeTotal, createTracks, isCleared, isStuck, rawTotal, scoreSquare } from "./rules";
 import { makeShape, rotateShape } from "./shapes";
 
 export type GameAction =
@@ -29,7 +29,7 @@ export function createGame(config: GameConfig, rng: Rng = Math.random): GameStat
       locks: Array(slotCount).fill(0),
     },
     selection: null,
-    score: computeTotal({ collected: 0, penalty: 0, bonus: 0 }, config.scoring),
+    score: computeTotal({ collected: 0, penalty: 0, bonus: 0 }),
     prev: null,
     status: "playing",
     nextPieceId: 1,
@@ -52,27 +52,20 @@ function snapshot(state: GameState): Snapshot {
 function finalize(state: GameState): GameState {
   if (state.status !== "playing") return state;
   if (isCleared(state.collection)) {
-    const score = computeTotal({ ...state.score, bonus: state.config.scoring.clearBonus }, state.config.scoring);
-    return { ...state, score, status: "cleared", selection: null };
+    return { ...state, score: addBonus(state.score, state.config.scoring.clearBonus), status: "cleared", selection: null };
   }
   if (isStuck(state)) return { ...state, status: "stuck", selection: null };
   return state;
 }
 
-// 손패가 비면 새로 제시한다. 재구성이 일어나면 감점하고 정체 여부를 본다
+// 손패가 비면 새로 제시한다. 재구성이 일어나면 감점하고, 음수 진입과 정체 여부를 본다
 function refillIfEmpty(state: GameState): GameState {
   if (state.deck.hand.length > 0) return state;
   const { deck, rebuilds } = drawHand(state.deck, state.config.handSize);
   if (rebuilds === 0) return { ...state, deck, prev: null };
-  const stalled = !state.placedSinceRebuild;
-  return {
-    ...state,
-    deck,
-    score: applyRecyclePenalty(state.score, state.config.scoring, rebuilds),
-    prev: null,
-    placedSinceRebuild: false,
-    status: stalled ? "stalled" : state.status,
-  };
+  const score = applyRecyclePenalty(state.score, state.config.scoring, rebuilds);
+  const status = rawTotal(score) < 0 ? "bankrupt" : !state.placedSinceRebuild ? "stalled" : state.status;
+  return { ...state, deck, score, prev: null, placedSinceRebuild: false, status };
 }
 
 export function reduce(state: GameState, action: GameAction): GameState {
@@ -86,11 +79,14 @@ export function reduce(state: GameState, action: GameAction): GameState {
       if (!canPlace(state.board, shape, action.anchor)) return state;
       const board = place(state.board, shape, card.color, state.nextPieceId, action.anchor);
       const hand = state.deck.hand.filter((_, i) => i !== action.handIndex);
+      // 제시된 손패를 전부 배치하면 보너스 (마지막 짧은 손패 포함)
+      const score = hand.length === 0 ? addBonus(state.score, state.config.scoring.handBonus) : state.score;
       const next: GameState = {
         ...state,
         prev: snapshot(state),
         board,
         deck: { ...state.deck, hand },
+        score,
         storage: { ...state.storage, locks: tickLocks(state.storage.locks) },
         nextPieceId: state.nextPieceId + 1,
         placedSinceRebuild: true,
@@ -154,7 +150,10 @@ export function reduce(state: GameState, action: GameAction): GameState {
         const nextIdx = state.config.targetSizes.indexOf(sel.size) + 1;
         return { ...t, collected, nextSize: state.config.targetSizes[nextIdx] ?? null };
       });
-      const score = computeTotal({ ...state.score, collected: state.score.collected + scoreSquare(state.config.scoring, sel.size) }, state.config.scoring);
+      const { scoring } = state.config;
+      let score = computeTotal({ ...state.score, collected: state.score.collected + scoreSquare(scoring, sel.size) });
+      // 이 추출로 해당 색상의 수집함이 다 찼으면 색상 완성 보너스
+      if (collection.find((t) => t.color === sel.color)!.nextSize === null) score = addBonus(score, scoring.trackBonus);
       return finalize({ ...state, prev: snapshot(state), board, collection, score, selection: null });
     }
 

@@ -63,13 +63,21 @@ export function scoreSquare(cfg: ScoringConfig, size: number): number {
   return cfg.squareScore[size] ?? 0;
 }
 
-export function computeTotal(score: Omit<Score, "total">, cfg: ScoringConfig): Score {
-  const raw = score.collected - score.penalty + score.bonus;
-  return { ...score, total: cfg.allowNegative ? raw : Math.max(0, raw) };
+// 클램프 전 합계. 음수면 즉시 종료 판정에 쓴다
+export function rawTotal(score: Omit<Score, "total">): number {
+  return score.collected - score.penalty + score.bonus;
+}
+
+export function computeTotal(score: Omit<Score, "total">): Score {
+  return { ...score, total: Math.max(0, rawTotal(score)) };
+}
+
+export function addBonus(score: Score, amount: number): Score {
+  return computeTotal({ ...score, bonus: score.bonus + amount });
 }
 
 export function applyRecyclePenalty(score: Score, cfg: ScoringConfig, times = 1): Score {
-  return computeTotal({ ...score, penalty: score.penalty + cfg.recyclePenalty * times }, cfg);
+  return computeTotal({ ...score, penalty: score.penalty + cfg.recyclePenalty * times });
 }
 
 export function createTracks(config: GameConfig): CollectionTrack[] {

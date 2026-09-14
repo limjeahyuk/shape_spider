@@ -7,6 +7,7 @@ const TITLE: Record<Exclude<GameStatus, "playing">, string> = {
   cleared: "모든 수집함 완성",
   stuck: "더 놓을 곳이 없습니다",
   stalled: "덱이 한 바퀴 돌았습니다",
+  bankrupt: "점수가 바닥났습니다",
   resigned: "게임 종료",
 };
 
@@ -36,7 +37,7 @@ function ResultOverlay({ status, score, recycleCount, onExit }: ResultOverlayPro
             <span>-{score.penalty.toLocaleString()}</span>
           </div>
           <div>
-            <span>완성 보너스</span>
+            <span>보너스</span>
             <span>+{score.bonus.toLocaleString()}</span>
           </div>
           <div className="result__total">

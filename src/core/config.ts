@@ -1,19 +1,20 @@
 import type { Difficulty, GameConfig, ScoringConfig } from "./types";
 import { SHAPE_IDS } from "./shapes";
 
-// 정사각형 배점: 칸 수 x 10 (GAME_RULES.md 잠정값)
-const SQUARE_SCORE_PER_CELL = 10;
+// 정사각형 배점: 한 변의 칸 수 x 100 (GAME_RULES.md 잠정값)
+const SQUARE_SCORE_PER_SIDE = 100;
 
 function buildSquareScore(sizes: number[]): Record<number, number> {
-  return Object.fromEntries(sizes.map((n) => [n, n * n * SQUARE_SCORE_PER_CELL]));
+  return Object.fromEntries(sizes.map((n) => [n, n * SQUARE_SCORE_PER_SIDE]));
 }
 
 function buildScoring(sizes: number[]): ScoringConfig {
   return {
     squareScore: buildSquareScore(sizes),
-    recyclePenalty: 50,
-    clearBonus: 2000,
-    allowNegative: false,
+    recyclePenalty: 1000,
+    trackBonus: 700,
+    handBonus: 50,
+    clearBonus: 5000,
   };
 }
 
@@ -40,8 +41,8 @@ function buildConfig(targetSizes: number[], storageCooldown: number, cardsPerCol
 
 // 난이도별 기본 설정. 목표 3~6이 기본, 3~8은 상위. 쿨타임은 「보관함」, 장수는 「도형 카드」 참조
 export const DIFFICULTY_PRESETS: Record<Difficulty, GameConfig> = {
-  easy: buildConfig([3, 4, 5], 0, 35),
-  normal: buildConfig([3, 4, 5, 6], 1, 35),
+  easy: buildConfig([3, 4, 5], 1, 35),
+  normal: buildConfig([3, 4, 5, 6], 2, 35),
   hard: buildConfig([3, 4, 5, 6, 7, 8], 3, 55),
 };
 

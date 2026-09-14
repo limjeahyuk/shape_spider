@@ -4,8 +4,9 @@ export type Difficulty = "easy" | "normal" | "hard";
 export interface ScoringConfig {
   squareScore: Record<number, number>;
   recyclePenalty: number;
+  trackBonus: number; // 한 색상 수집함 완성
+  handBonus: number; // 제시된 손패를 전부 배치
   clearBonus: number;
-  allowNegative: boolean;
 }
 
 export interface GameConfig {
@@ -100,7 +101,7 @@ export interface Score {
   total: number;
 }
 
-export type GameStatus = "playing" | "cleared" | "stuck" | "stalled" | "resigned";
+export type GameStatus = "playing" | "cleared" | "stuck" | "stalled" | "bankrupt" | "resigned";
 
 export interface GameState {
   config: GameConfig;
