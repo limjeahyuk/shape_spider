@@ -256,6 +256,14 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       dispatch({ type: "CANCEL_SELECTION" });
       return;
     }
+    // 정사각형이 없는 덩어리를 다시 누르면 빈 보관함 칸으로 바로 보낸다
+    if (sel?.kind === "pick" && sel.group.some((p) => p.r === cell.r && p.c === cell.c)) {
+      const slotIndex = game.storage.slots.findIndex((s, i) => s === null && game.storage.locks[i] === 0);
+      if (config.storageEnabled && slotIndex >= 0) {
+        dispatch({ type: "STORE_GROUP", cell: sel.origin, slotIndex });
+        return;
+      }
+    }
     dispatch({ type: "BEGIN_SELECTION", cell });
   };
 
