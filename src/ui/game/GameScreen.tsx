@@ -454,6 +454,20 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
             <span>점수</span>
             <strong>{game.score.total.toLocaleString()}</strong>
           </Panel>
+          <IconButton
+            label="되돌리기"
+            className="m-head__undo"
+            disabled={!game.prev}
+            onClick={() => {
+              disarm();
+              dispatch({ type: "UNDO" });
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 14L4 9l5-5" />
+              <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
+            </svg>
+          </IconButton>
         </header>
         <ul className="m-stats">
           {stats.map((r) => (
@@ -475,17 +489,6 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
             {trays}
           </Panel>
           {storagePanel}
-        </div>
-        <div className="m-actions">
-          {undoButton}
-          <Button
-            variant="primary"
-            disabled={!activeArmed}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={rotate}
-          >
-            회전
-          </Button>
         </div>
         {result}
       </main>
