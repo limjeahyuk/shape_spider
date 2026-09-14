@@ -1,10 +1,23 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import type { Coord, Difficulty, GameConfig, PieceShape } from "../../core/types";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import type {
+  Coord,
+  Difficulty,
+  GameConfig,
+  PieceShape,
+} from "../../core/types";
 import { DIFFICULTY_LABEL } from "../../core/config";
-import { canPlace, findExtractPositions, shapeCellsAt } from "../../core/board";
+import { at, canPlace, shapeCellsAt } from "../../core/board";
 import { remainingCount } from "../../core/deck";
 import { createGame, reduce } from "../../core/game";
-import { remainingTargets } from "../../core/rules";
+import { collectTarget, remainingTargets } from "../../core/rules";
 import { grabCell } from "../../core/shapes";
 import Button from "../../components/Button";
 import Panel from "../../components/Panel";
@@ -78,13 +91,17 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       const size = rect.width / game.board.cols;
       const c = Math.floor((x - rect.left) / size);
       const r = Math.floor((y - rect.top) / size);
-      if (r < 0 || c < 0 || r >= game.board.rows || c >= game.board.cols) return null;
+      if (r < 0 || c < 0 || r >= game.board.rows || c >= game.board.cols)
+        return null;
       return { r, c };
     },
     [game.board.rows, game.board.cols],
   );
 
-  const armedPiece = useMemo((): { shape: PieceShape; color: number } | null => {
+  const armedPiece = useMemo((): {
+    shape: PieceShape;
+    color: number;
+  } | null => {
     if (!armed) return null;
     if (armed.source === "hand") {
       const card = game.deck.hand[armed.index];
@@ -107,8 +124,15 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const ghost = useMemo((): Ghost | null => {
     if (!armedPiece || !hover) return null;
     const anchor = anchorFor(hover, armedPiece.shape);
-    const cells = shapeCellsAt(armedPiece.shape, anchor).filter((p) => p.r >= 0 && p.c >= 0 && p.r < game.board.rows && p.c < game.board.cols);
-    return { cells, valid: canPlace(game.board, armedPiece.shape, anchor), color: armedPiece.color };
+    const cells = shapeCellsAt(armedPiece.shape, anchor).filter(
+      (p) =>
+        p.r >= 0 && p.c >= 0 && p.r < game.board.rows && p.c < game.board.cols,
+    );
+    return {
+      cells,
+      valid: canPlace(game.board, armedPiece.shape, anchor),
+      color: armedPiece.color,
+    };
   }, [armedPiece, hover, anchorFor, game.board]);
 
   const disarm = useCallback(() => {
@@ -121,7 +145,8 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       if (!armed || !armedPiece) return false;
       const anchor = anchorFor(cell, armedPiece.shape);
       if (!canPlace(game.board, armedPiece.shape, anchor)) return false;
-      if (armed.source === "hand") dispatch({ type: "PLACE_PIECE", handIndex: armed.index, anchor });
+      if (armed.source === "hand")
+        dispatch({ type: "PLACE_PIECE", handIndex: armed.index, anchor });
       else dispatch({ type: "PLACE_STORED", slotIndex: armed.index, anchor });
       return true;
     },
@@ -129,20 +154,34 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   );
 
   // ── 카드(손패/보관함) 포인터 처리: 클릭이면 집기 토글, 끌면 드래그 배치 ──
-  const onCardDown = (source: Armed["source"]) => (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
-    if (!playing) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setIsTouch(e.pointerType === "touch");
-    const wasArmed = armed?.source === source && armed.index === index;
-    cardDrag.current = { source, index, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, wasArmed };
-    setArmed({ source, index });
-    if (game.selection) dispatch({ type: "CANCEL_SELECTION" });
-  };
+  const onCardDown =
+    (source: Armed["source"]) =>
+    (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
+      if (!playing) return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setIsTouch(e.pointerType === "touch");
+      const wasArmed = armed?.source === source && armed.index === index;
+      cardDrag.current = {
+        source,
+        index,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        moved: false,
+        wasArmed,
+      };
+      setArmed({ source, index });
+      if (game.selection) dispatch({ type: "CANCEL_SELECTION" });
+    };
 
   const onCardMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
     const d = cardDrag.current;
     if (!d || d.pointerId !== e.pointerId) return;
-    if (!d.moved && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) > DRAG_THRESHOLD_PX) d.moved = true;
+    if (
+      !d.moved &&
+      Math.hypot(e.clientX - d.startX, e.clientY - d.startY) > DRAG_THRESHOLD_PX
+    )
+      d.moved = true;
     if (d.moved) setHover(cellFromPoint(e.clientX, e.clientY));
   };
 
@@ -173,34 +212,57 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     }
 
     const sel = game.selection;
-    if (sel?.kind === "collect" && cell.r >= sel.anchor.r && cell.r < sel.anchor.r + sel.size && cell.c >= sel.anchor.c && cell.c < sel.anchor.c + sel.size) {
+    if (
+      sel?.kind === "collect" &&
+      cell.r >= sel.anchor.r &&
+      cell.r < sel.anchor.r + sel.size &&
+      cell.c >= sel.anchor.c &&
+      cell.c < sel.anchor.c + sel.size
+    ) {
       e.currentTarget.setPointerCapture(e.pointerId);
-      frameDrag.current = { pointerId: e.pointerId, grab: { r: cell.r - sel.anchor.r, c: cell.c - sel.anchor.c }, startX: e.clientX, startY: e.clientY, moved: false };
+      frameDrag.current = {
+        pointerId: e.pointerId,
+        grab: { r: cell.r - sel.anchor.r, c: cell.c - sel.anchor.c },
+        startX: e.clientX,
+        startY: e.clientY,
+        moved: false,
+      };
       return;
     }
 
-    const target = game.board.cells[cell.r * game.board.cols + cell.c];
+    const target = at(game.board, cell.r, cell.c);
     if (!target) {
       dispatch({ type: "CANCEL_SELECTION" });
       return;
     }
     // 프레임을 못 띄우는 경우에도 pick 선택은 되므로 안내만 띄운다
-    const track = game.collection[target.color];
+    const { size, candidates } = collectTarget(game.board, game.collection, target.color);
     const name = pieceColor(target.color).name;
-    if (track.nextSize === null) showNotice(`${name} 수집함은 이미 가득 찼습니다`);
-    else if (findExtractPositions(game.board, target.color, track.nextSize).length === 0) showNotice(`${name} ${track.nextSize}×${track.nextSize} 정사각형이 아직 없습니다`);
+    if (size === null) showNotice(`${name} 수집함은 이미 가득 찼습니다`);
+    else if (candidates.length === 0)
+      showNotice(`${name} ${size}×${size} 정사각형이 아직 없습니다`);
     dispatch({ type: "BEGIN_SELECTION", cell });
   };
 
   const onBoardMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     const f = frameDrag.current;
     if (f && f.pointerId === e.pointerId) {
-      if (!f.moved && Math.hypot(e.clientX - f.startX, e.clientY - f.startY) > DRAG_THRESHOLD_PX) f.moved = true;
+      if (
+        !f.moved &&
+        Math.hypot(e.clientX - f.startX, e.clientY - f.startY) >
+          DRAG_THRESHOLD_PX
+      )
+        f.moved = true;
       const cell = cellFromPoint(e.clientX, e.clientY);
-      if (cell && f.moved) dispatch({ type: "MOVE_SELECTION", anchor: { r: cell.r - f.grab.r, c: cell.c - f.grab.c } });
+      if (cell && f.moved)
+        dispatch({
+          type: "MOVE_SELECTION",
+          anchor: { r: cell.r - f.grab.r, c: cell.c - f.grab.c },
+        });
       return;
     }
-    if (armed && !cardDrag.current) setHover(cellFromPoint(e.clientX, e.clientY));
+    if (armed && !cardDrag.current)
+      setHover(cellFromPoint(e.clientX, e.clientY));
   };
 
   const onBoardUp = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -229,14 +291,28 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
         dispatch({ type: "CONFIRM_SELECTION" });
         return;
       }
-      const dir: Record<string, Coord> = { ArrowUp: { r: -1, c: 0 }, ArrowDown: { r: 1, c: 0 }, ArrowLeft: { r: 0, c: -1 }, ArrowRight: { r: 0, c: 1 } };
+      const dir: Record<string, Coord> = {
+        ArrowUp: { r: -1, c: 0 },
+        ArrowDown: { r: 1, c: 0 },
+        ArrowLeft: { r: 0, c: -1 },
+        ArrowRight: { r: 0, c: 1 },
+      };
       const d = dir[e.key];
       if (!d) return;
       e.preventDefault();
       // 해당 방향으로 가장 가까운 유효 위치를 찾는다
       const next = sel.candidates
-        .filter((a) => (d.r !== 0 ? Math.sign(a.r - sel.anchor.r) === d.r : Math.sign(a.c - sel.anchor.c) === d.c))
-        .sort((a, b) => Math.abs(a.r - sel.anchor.r) + Math.abs(a.c - sel.anchor.c) - (Math.abs(b.r - sel.anchor.r) + Math.abs(b.c - sel.anchor.c)))[0];
+        .filter((a) =>
+          d.r !== 0
+            ? Math.sign(a.r - sel.anchor.r) === d.r
+            : Math.sign(a.c - sel.anchor.c) === d.c,
+        )
+        .sort(
+          (a, b) =>
+            Math.abs(a.r - sel.anchor.r) +
+            Math.abs(a.c - sel.anchor.c) -
+            (Math.abs(b.r - sel.anchor.r) + Math.abs(b.c - sel.anchor.c)),
+        )[0];
       if (next) dispatch({ type: "MOVE_SELECTION", anchor: next });
     };
     window.addEventListener("keydown", onKey);
@@ -254,7 +330,10 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
 
   const infoRows = [
     { label: "난이도", value: DIFFICULTY_LABEL[difficulty] },
-    { label: "남은 목표", value: String(remainingTargets(game.collection, config)) },
+    {
+      label: "남은 목표",
+      value: String(remainingTargets(game.collection, config)),
+    },
     { label: "재구성", value: `${game.deck.recycleCount}회` },
     { label: "점수", value: game.score.total.toLocaleString(), strong: true },
   ];
@@ -271,7 +350,10 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   return (
     <main className="game">
       <header className="game__top">
-        <DeckCard remaining={game.deck.pending.length} recycled={game.deck.recycled.length} />
+        <DeckCard
+          remaining={game.deck.pending.length}
+          recycled={game.deck.recycled.length}
+        />
         <HandTray
           hand={game.deck.hand}
           handSize={config.handSize}
@@ -305,7 +387,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
             <span className="board__size">
               {game.board.rows} × {game.board.cols}
             </span>
-            <span className={`board__hint ${notice ? "is-notice" : ""}`}>{notice ?? hint}</span>
+            {/* <span className={`board__hint ${notice ? "is-notice" : ""}`}>{notice ?? hint}</span> */}
           </p>
         </Panel>
 
@@ -313,7 +395,9 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
           {config.storageEnabled && (
             <StoragePanel
               storage={game.storage}
-              armedIndex={activeArmed?.source === "storage" ? activeArmed.index : null}
+              armedIndex={
+                activeArmed?.source === "storage" ? activeArmed.index : null
+              }
               canStore={!!sel && game.storage.slots.some((s) => s === null)}
               disabled={!playing}
               onStore={onStore}
@@ -326,23 +410,42 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
             {sel ? (
               <>
                 {sel.kind === "collect" && (
-                  <Button variant="primary" onClick={() => dispatch({ type: "CONFIRM_SELECTION" })}>
+                  <Button
+                    variant="primary"
+                    onClick={() => dispatch({ type: "CONFIRM_SELECTION" })}
+                  >
                     수집함에 넣기
                   </Button>
                 )}
-                <Button onClick={() => dispatch({ type: "CANCEL_SELECTION" })}>취소</Button>
+                <Button onClick={() => dispatch({ type: "CANCEL_SELECTION" })}>
+                  취소
+                </Button>
               </>
             ) : (
               <>
-                <Button disabled={!playing || remainingCount(game.deck) + game.deck.hand.length === 0} onClick={() => dispatch({ type: "PASS_HAND" })}>
+                <Button
+                  disabled={
+                    !playing ||
+                    remainingCount(game.deck) + game.deck.hand.length === 0
+                  }
+                  onClick={() => dispatch({ type: "PASS_HAND" })}
+                >
                   손패 넘기기
                 </Button>
-                <Button disabled={!game.prev} onClick={() => dispatch({ type: "UNDO" })}>
+                <Button
+                  disabled={!game.prev}
+                  onClick={() => dispatch({ type: "UNDO" })}
+                >
                   되돌리기
                 </Button>
               </>
             )}
-            <button type="button" className="game__resign" disabled={!playing} onClick={() => dispatch({ type: "RESIGN" })}>
+            <button
+              type="button"
+              className="game__resign"
+              disabled={!playing}
+              onClick={() => dispatch({ type: "RESIGN" })}
+            >
               게임 포기
             </button>
           </div>
@@ -351,11 +454,22 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
 
       <footer className="game__bottom">
         {game.collection.map((track) => (
-          <CollectionTray key={track.color} track={track} targetSizes={config.targetSizes} />
+          <CollectionTray
+            key={track.color}
+            track={track}
+            targetSizes={config.targetSizes}
+          />
         ))}
       </footer>
 
-      {!playing && <ResultOverlay status={game.status} score={game.score} recycleCount={game.deck.recycleCount} onExit={onExit} />}
+      {!playing && (
+        <ResultOverlay
+          status={game.status}
+          score={game.score}
+          recycleCount={game.deck.recycleCount}
+          onExit={onExit}
+        />
+      )}
     </main>
   );
 }
