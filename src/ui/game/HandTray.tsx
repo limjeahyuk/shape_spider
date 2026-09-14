@@ -24,23 +24,19 @@ type State = { slots: Layout; deals: number };
 
 const DEAL_STAGGER_MS = 70;
 
-// 새 손패면 순서대로 채우고, 배치로 빠진 카드는 자리만 비운다
+// 새 손패면 순서대로 채운다. 배치로 빠진 카드도 자리를 유지해 되돌리기 시 같은 자리로 돌아온다
 function nextLayout(prev: State, hand: CardData[], handSize: number): State {
   const ids = hand.map((c) => c.pieceId);
   const isNewHand = ids.some((id) => !prev.slots.includes(id));
-  if (isNewHand) return { slots: [...ids, ...Array<null>(Math.max(0, handSize - ids.length)).fill(null)], deals: prev.deals + 1 };
-  return { slots: prev.slots.map((id) => (id !== null && ids.includes(id) ? id : null)), deals: prev.deals };
-}
-
-function same(a: Layout, b: Layout): boolean {
-  return a.length === b.length && a.every((v, i) => v === b[i]);
+  if (!isNewHand) return prev;
+  return { slots: [...ids, ...Array<null>(Math.max(0, handSize - ids.length)).fill(null)], deals: prev.deals + 1 };
 }
 
 // 제시된 손패. 배치한 자리는 빈 슬롯으로 남겨 카드 위치가 흔들리지 않게 한다
 function HandTray({ hand, handSize, armedIndex, armedShape, disabled, onPointerDown, onPointerMove, onPointerUp }: HandTrayProps) {
   const [state, setState] = useState<State>(() => nextLayout({ slots: [], deals: 0 }, hand, handSize));
   const computed = nextLayout(state, hand, handSize);
-  if (!same(computed.slots, state.slots)) setState(computed);
+  if (computed !== state) setState(computed);
   const root = useRef<HTMLDivElement>(null);
 
   // 새 손패가 깔리면 각 카드가 덱에서 순서대로 날아온다
