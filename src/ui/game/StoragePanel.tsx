@@ -5,6 +5,16 @@ import PieceIcon from "../../components/PieceIcon";
 import { pieceColor, toIconCells } from "./palette";
 import "./StoragePanel.css";
 
+// 보관 칸 아이콘이 들어갈 정사각 영역(px)과 칸 크기 상한
+const ICON_BOX_PX = 74;
+const MAX_ICON_CELL_PX = 16;
+
+// 도형의 긴 변 기준으로 칸 크기를 줄여 슬롯 안에 들어가게 한다 (칸 사이 간격 2px 포함)
+function iconCellSize(cells: { r: number; c: number }[]): number {
+  const span = Math.max(...cells.flatMap((p) => [p.r, p.c])) + 1;
+  return Math.min(MAX_ICON_CELL_PX, Math.floor(ICON_BOX_PX / span) - 2);
+}
+
 interface StoragePanelProps {
   storage: Storage;
   armedIndex: number | null;
@@ -37,7 +47,7 @@ function StoragePanel({ storage, armedIndex, canStore, disabled, onStore, onPoin
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
             >
-              <PieceIcon cells={toIconCells(slot.shape.cells)} color={pieceColor(slot.color).color} shade={pieceColor(slot.color).shade} cellSize={slot.shape.cells.length > 12 ? 12 : 18} />
+              <PieceIcon cells={toIconCells(slot.shape.cells)} color={pieceColor(slot.color).color} shade={pieceColor(slot.color).shade} cellSize={iconCellSize(slot.shape.cells)} />
               <span className="storage__size">{slot.shape.size}칸</span>
             </button>
           ) : (

@@ -1,22 +1,24 @@
 .tray {
-  padding: 12px 14px 10px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   font-family: var(--font-serif);
   color: var(--color-cream);
 }
 .tray__well {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  padding: 12px 10px;
+  gap: 8px;
+  padding: 10px;
 }
+/* 목표 크기가 많으면(어려움) 한 줄에 들어가도록 줄어든다 */
 .tray__slot {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  flex: 0 1 40px;
+  min-width: 0;
+  aspect-ratio: 1;
   border-radius: 4px;
   border: 1px dashed var(--color-slot-empty-border);
   background: var(--color-slot-empty);

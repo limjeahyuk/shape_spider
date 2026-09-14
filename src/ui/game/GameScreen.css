@@ -1,10 +1,10 @@
 .game {
-  /* 상단 줄과 보드가 한 화면에 들어오도록 맞추고, 수집함은 아래로 스크롤될 수 있다 */
-  --cell: clamp(48px, min(calc((100svh - 370px) / 10), calc((100vw - 720px) / 10)), 76px);
+  /* 상단 줄과 보드, 양옆 열이 스크롤 없이 한 화면에 들어오도록 맞춘다 */
+  --cell: clamp(32px, min(calc((100svh - 390px) / 10), calc((100vw - 690px) / 10)), 76px);
   min-height: 100svh;
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   gap: 18px;
   padding: 18px 28px 22px;
   background:
@@ -29,7 +29,7 @@
   width: 100%;
 }
 
-/* 가운데: 조립 판 · 보관함 */
+/* 가운데: 수집함 · 조립 판 · 보관함 · 수집함 */
 .game__middle {
   display: flex;
   justify-content: center;
@@ -75,9 +75,8 @@
 .game__side {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  width: 250px;
-  padding-top: 56px;
+  gap: 12px;
+  width: 260px;
 }
 .game__deck,
 .game__info {
@@ -108,20 +107,10 @@
   opacity: 0.4;
 }
 
-/* 하단: 수집함 4개 */
-.game__bottom {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
 @media (max-width: 1240px) {
   .game__top {
     grid-template-columns: 130px minmax(0, 1fr) 240px;
     gap: 20px;
-  }
-  .game__bottom {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 900px) {
@@ -137,14 +126,10 @@
     align-items: center;
   }
   .game__side {
-    padding-top: 0;
     width: 100%;
     max-width: 420px;
   }
-  .storage {
-    width: 100%;
-  }
-  .game__bottom {
-    grid-template-columns: 1fr;
+  .game__middle .board {
+    order: -1;
   }
 }
