@@ -1,5 +1,6 @@
 .game {
-  --cell: clamp(30px, min(calc((100svh - 500px) / 10), calc((100vw - 720px) / 10)), 58px);
+  /* 상단 줄과 보드가 한 화면에 들어오도록 맞추고, 수집함은 아래로 스크롤될 수 있다 */
+  --cell: clamp(48px, min(calc((100svh - 370px) / 10), calc((100vw - 720px) / 10)), 76px);
   min-height: 100svh;
   box-sizing: border-box;
   display: grid;
@@ -78,13 +79,16 @@
   width: 250px;
   padding-top: 56px;
 }
-.game__actions {
+.game__deck,
+.game__info {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+.game__deck {
+  align-items: center;
+}
 .game__resign {
-  margin-top: 6px;
   align-self: center;
   padding: 4px 8px;
   border: none;

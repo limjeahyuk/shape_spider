@@ -10,6 +10,21 @@
   position: relative;
   width: 124px;
   height: 160px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.deck__stack:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.deck__stack:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.deck__stack:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 .deck__back {
   position: absolute;

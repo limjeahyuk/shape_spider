@@ -326,10 +326,29 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   return (
     <main className="game">
       <header className="game__top">
-        <DeckCard
-          remaining={game.deck.pending.length}
-          recycled={game.deck.recycled.length}
-        />
+        <div className="game__deck">
+          <DeckCard
+            remaining={game.deck.pending.length}
+            recycled={game.deck.recycled.length}
+            disabled={
+              !playing ||
+              remainingCount(game.deck) + game.deck.hand.length === 0
+            }
+            onClick={() => {
+              disarm();
+              dispatch({ type: "PASS_HAND" });
+            }}
+          />
+          <Button
+            disabled={!game.prev}
+            onClick={() => {
+              disarm();
+              dispatch({ type: "UNDO" });
+            }}
+          >
+            되돌리기
+          </Button>
+        </div>
         <HandTray
           hand={game.deck.hand}
           handSize={config.handSize}
@@ -339,7 +358,17 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
           onPointerMove={onCardMove}
           onPointerUp={onCardUp}
         />
-        <InfoPanel rows={infoRows} />
+        <div className="game__info">
+          <InfoPanel rows={infoRows} />
+          <button
+            type="button"
+            className="game__resign"
+            disabled={!playing}
+            onClick={() => dispatch({ type: "RESIGN" })}
+          >
+            게임 포기
+          </button>
+        </div>
       </header>
 
       <section className="game__middle">
@@ -381,49 +410,6 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
               onPointerUp={onCardUp}
             />
           )}
-          <div className="game__actions">
-            {sel ? (
-              <>
-                {sel.kind === "collect" && (
-                  <Button
-                    variant="primary"
-                    onClick={() => dispatch({ type: "CONFIRM_SELECTION" })}
-                  >
-                    수집함에 넣기
-                  </Button>
-                )}
-                <Button onClick={() => dispatch({ type: "CANCEL_SELECTION" })}>
-                  취소
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  disabled={
-                    !playing ||
-                    remainingCount(game.deck) + game.deck.hand.length === 0
-                  }
-                  onClick={() => dispatch({ type: "PASS_HAND" })}
-                >
-                  손패 넘기기
-                </Button>
-                <Button
-                  disabled={!game.prev}
-                  onClick={() => dispatch({ type: "UNDO" })}
-                >
-                  되돌리기
-                </Button>
-              </>
-            )}
-            <button
-              type="button"
-              className="game__resign"
-              disabled={!playing}
-              onClick={() => dispatch({ type: "RESIGN" })}
-            >
-              게임 포기
-            </button>
-          </div>
         </aside>
       </section>
 
