@@ -12,7 +12,7 @@ export function colorRecipe(config: GameConfig): string[] {
   for (let k = 0; k < config.cardsPerColor - counts.reduce((a, b) => a + b, 0); k++) counts[byFraction[k]]++;
   return sizes.flatMap((size, i) => {
     const ids = config.shapeIds.filter((id) => getShape(id).size === size);
-    return ids.length ? Array.from({ length: counts[i] }, (_, j) => ids[j % ids.length]) : [];
+    return Array.from({ length: counts[i] }, (_, j) => ids[j % ids.length]);
   });
 }
 

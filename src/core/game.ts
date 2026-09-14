@@ -17,6 +17,7 @@ export type GameAction =
   | { type: "RESIGN" };
 
 export function createGame(config: GameConfig, rng: Rng = Math.random): GameState {
+  const slotCount = config.storageEnabled ? config.storageSlots : 0;
   const { deck } = drawHand(createDeck(config, rng), config.handSize);
   const base: GameState = {
     config,
@@ -24,8 +25,8 @@ export function createGame(config: GameConfig, rng: Rng = Math.random): GameStat
     deck,
     collection: createTracks(config),
     storage: {
-      slots: Array.from({ length: config.storageEnabled ? config.storageSlots : 0 }, () => null),
-      locks: Array.from({ length: config.storageEnabled ? config.storageSlots : 0 }, () => 0),
+      slots: Array(slotCount).fill(null),
+      locks: Array(slotCount).fill(0),
     },
     selection: null,
     score: computeTotal({ collected: 0, penalty: 0, bonus: 0 }, config.scoring),

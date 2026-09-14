@@ -51,23 +51,8 @@ export function makeShape(id: string, cells: Coord[]): PieceShape {
 // 시계 방향 90도 회전을 times번 적용한다. id는 유지한다
 export function rotateShape(shape: PieceShape, times: number): PieceShape {
   let cells = shape.cells;
-  for (let i = 0; i < ((times % 4) + 4) % 4; i++) cells = cells.map((p) => ({ r: p.c, c: -p.r }));
-  return cells === shape.cells ? shape : makeShape(shape.id, cells);
-}
-
-// 중복을 제거한 회전 형태 목록 (O4는 1개, I는 2개 등)
-export function rotationsOf(shape: PieceShape): PieceShape[] {
-  const out: PieceShape[] = [];
-  const seen = new Set<string>();
-  for (let t = 0; t < 4; t++) {
-    const s = rotateShape(shape, t);
-    const key = JSON.stringify(s.cells);
-    if (!seen.has(key)) {
-      seen.add(key);
-      out.push(s);
-    }
-  }
-  return out;
+  for (let i = 0; i < times % 4; i++) cells = cells.map((p) => ({ r: p.c, c: -p.r }));
+  return makeShape(shape.id, cells);
 }
 
 export function shapeBounds(shape: PieceShape): { rows: number; cols: number } {

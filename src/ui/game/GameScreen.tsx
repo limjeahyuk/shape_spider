@@ -346,15 +346,6 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
 
   const sel = game.selection;
 
-  // 수집함은 모두 보드 왼쪽에 배치한다
-  const trays = game.collection.map((track) => (
-    <CollectionTray
-      key={track.color}
-      track={track}
-      targetSizes={config.targetSizes}
-    />
-  ));
-
   return (
     <main className="game" onPointerDown={onGamePointerDown}>
       <header className="game__top">
@@ -406,7 +397,13 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
 
       <section className="game__middle">
         <aside className="game__side game__side--left">
-          {trays}
+          {game.collection.map((track) => (
+            <CollectionTray
+              key={track.color}
+              track={track}
+              targetSizes={config.targetSizes}
+            />
+          ))}
         </aside>
 
         <Panel tone="wood" className="board">
