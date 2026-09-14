@@ -1,7 +1,7 @@
 import type { Coord, GameConfig, GameState, Snapshot } from "./types";
-import { canPlace, connectedGroup, createBoard, extract, findExtractPositions, place, removeCells, snapToNearestValid, squareCells } from "./board";
+import { at, canPlace, connectedGroup, createBoard, extract, place, removeCells, snapToNearestValid, squareCells } from "./board";
 import { createDeck, drawHand, passHand, type Rng } from "./deck";
-import { applyRecyclePenalty, computeTotal, createTracks, isCleared, isStuck, scoreSquare } from "./rules";
+import { applyRecyclePenalty, collectTarget, computeTotal, createTracks, isCleared, isStuck, scoreSquare } from "./rules";
 import { makeShape } from "./shapes";
 
 export type GameAction =
@@ -108,14 +108,11 @@ export function reduce(state: GameState, action: GameAction): GameState {
     }
 
     case "BEGIN_SELECTION": {
-      const cell = state.board.cells[action.cell.r * state.board.cols + action.cell.c];
+      const cell = at(state.board, action.cell.r, action.cell.c);
       if (!cell) return { ...state, selection: null };
       const pick = { kind: "pick" as const, color: cell.color, origin: action.cell, group: connectedGroup(state.board, action.cell) };
-      const track = state.collection[cell.color];
-      if (!track || track.nextSize === null) return { ...state, selection: pick };
-      const size = track.nextSize;
-      const candidates = findExtractPositions(state.board, cell.color, size);
-      if (candidates.length === 0) return { ...state, selection: pick };
+      const { size, candidates } = collectTarget(state.board, state.collection, cell.color);
+      if (size === null || candidates.length === 0) return { ...state, selection: pick };
       // 탭한 칸을 포함하는 위치를 우선, 없으면 가장 가까운 위치로 스냅
       const containing = candidates.filter((a) => squareCells(a, size).some((p) => p.r === action.cell.r && p.c === action.cell.c));
       const anchor = snapToNearestValid(containing.length ? containing : candidates, { r: action.cell.r - Math.floor(size / 2), c: action.cell.c - Math.floor(size / 2) })!;
@@ -151,7 +148,7 @@ export function reduce(state: GameState, action: GameAction): GameState {
       if (state.storage.slots[action.slotIndex] !== null || action.slotIndex >= state.storage.slots.length) return state;
       const group = connectedGroup(state.board, action.cell);
       if (group.length === 0) return state;
-      const color = state.board.cells[action.cell.r * state.board.cols + action.cell.c]!.color;
+      const color = at(state.board, action.cell.r, action.cell.c)!.color;
       const shape = makeShape(`stored-${state.nextPieceId}`, group);
       const slots = state.storage.slots.with(action.slotIndex, { color, shape });
       return finalize({ ...state, prev: snapshot(state), board: removeCells(state.board, group), storage: { slots }, selection: null });

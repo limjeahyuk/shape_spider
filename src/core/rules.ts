@@ -1,5 +1,5 @@
-import type { Board, CollectionTrack, Coord, Destination, GameConfig, GameState, PieceShape, Score, ScoringConfig } from "./types";
-import { canPlace, connectedGroup, findExtractPositions, squareCells } from "./board";
+import type { Board, CollectionTrack, ColorId, Coord, Destination, GameConfig, GameState, PieceShape, Score, ScoringConfig } from "./types";
+import { at, canPlace, connectedGroup, findExtractPositions, squareCells } from "./board";
 import { allCards } from "./deck";
 
 // ── 배치 가능 여부 ─────────────────────────────────────
@@ -33,17 +33,22 @@ export function isStuck(state: GameState): boolean {
   return !anyExtractable(state.board, state.collection);
 }
 
+// 색상의 다음 수집 크기와 추출 가능 위치. size가 null이면 수집함 완료, candidates가 비면 정사각형 없음
+export function collectTarget(board: Board, tracks: CollectionTrack[], color: ColorId): { size: number | null; candidates: Coord[] } {
+  const size = tracks.find((t) => t.color === color)?.nextSize ?? null;
+  return { size, candidates: size === null ? [] : findExtractPositions(board, color, size) };
+}
+
 // ── 선택 규칙 디스패치: 목적지가 규칙을 결정한다 ───────
 export function selectCells(board: Board, start: Coord, dest: Destination, tracks: CollectionTrack[]): Coord[] {
-  const cell = board.cells[start.r * board.cols + start.c];
+  const cell = at(board, start.r, start.c);
   if (!cell) return [];
   switch (dest.kind) {
     case "collect": {
-      const track = tracks.find((t) => t.color === cell.color);
-      if (!track || track.nextSize === null) return [];
-      const candidates = findExtractPositions(board, cell.color, track.nextSize);
-      const anchor = candidates.find((a) => squareCells(a, track.nextSize!).some((p) => p.r === start.r && p.c === start.c)) ?? candidates[0];
-      return anchor ? squareCells(anchor, track.nextSize) : [];
+      const { size, candidates } = collectTarget(board, tracks, cell.color);
+      if (size === null) return [];
+      const anchor = candidates.find((a) => squareCells(a, size).some((p) => p.r === start.r && p.c === start.c)) ?? candidates[0];
+      return anchor ? squareCells(anchor, size) : [];
     }
     case "store":
       return connectedGroup(board, start);

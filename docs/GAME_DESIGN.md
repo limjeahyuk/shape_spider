@@ -246,7 +246,7 @@ outlineEdges(board: Board, r: number, c: number): Edges;             // 이웃�
                             pointer-events: none
                             유효=초록 / 무효=빨강
 <HandTray>                  현재 제시된 카드 5장
-<CollectionPanel>           색상별 다음 목표 + 완료 목록
+<CollectionTray>            색상별 다음 목표 + 완료 목록
 <ScorePanel>                현재 점수 + 재구성 횟수
 <UndoButton>                1단계 되돌리기. 사용 가능 여부 표시
 <StoragePanel>              (도입 시)
