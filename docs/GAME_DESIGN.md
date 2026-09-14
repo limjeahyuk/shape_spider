@@ -110,7 +110,7 @@ interface GameConfig {
   storageEnabled: boolean;
   storageSlots: number; // 2 고정
   storageCooldown: number; // 쉬움 0 · 보통 1 · 어려움 3
-  cardsPerColor: number; // 35
+  cardsPerColor: number; // 35, 어려움 55
   shapeIds: string[]; // 사용할 도형 카탈로그
   sizeRatio: Record<number, number>; // 칸 수별 비율 { 2: 0.1, 3: 0.2, 4: 0.35, 5: 0.35 }
   maxRecycles: number | null; // 재구성 상한. 잠정 null(무제한) — 정체 판정으로 종료시킨다

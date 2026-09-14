@@ -20,7 +20,7 @@ function buildScoring(sizes: number[]): ScoringConfig {
 // 덱의 칸 수별 비율 (GAME_RULES.md 「도형 카드」)
 const SIZE_RATIO: Record<number, number> = { 2: 0.1, 3: 0.2, 4: 0.35, 5: 0.35 };
 
-function buildConfig(targetSizes: number[], storageCooldown: number): GameConfig {
+function buildConfig(targetSizes: number[], storageCooldown: number, cardsPerColor: number): GameConfig {
   return {
     rows: 10,
     cols: 10,
@@ -30,7 +30,7 @@ function buildConfig(targetSizes: number[], storageCooldown: number): GameConfig
     storageEnabled: true,
     storageSlots: 2,
     storageCooldown,
-    cardsPerColor: 35,
+    cardsPerColor,
     shapeIds: [...SHAPE_IDS],
     sizeRatio: SIZE_RATIO,
     maxRecycles: null,
@@ -38,11 +38,11 @@ function buildConfig(targetSizes: number[], storageCooldown: number): GameConfig
   };
 }
 
-// 난이도별 기본 설정. 목표 3~6이 기본, 3~8은 상위. 보관함 쿨타임은 GAME_RULES.md 「보관함」
+// 난이도별 기본 설정. 목표 3~6이 기본, 3~8은 상위. 쿨타임은 「보관함」, 장수는 「도형 카드」 참조
 export const DIFFICULTY_PRESETS: Record<Difficulty, GameConfig> = {
-  easy: buildConfig([3, 4, 5], 0),
-  normal: buildConfig([3, 4, 5, 6], 1),
-  hard: buildConfig([3, 4, 5, 6, 7, 8], 3),
+  easy: buildConfig([3, 4, 5], 0, 35),
+  normal: buildConfig([3, 4, 5, 6], 1, 35),
+  hard: buildConfig([3, 4, 5, 6, 7, 8], 3, 55),
 };
 
 export const DIFFICULTY_ORDER: Difficulty[] = ["easy", "normal", "hard"];
