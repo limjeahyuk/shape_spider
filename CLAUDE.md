@@ -39,5 +39,6 @@ Game Rules: `docs/GAME_RULES.md` 참조
 
 - `Button` — 목재(`wood`)/황금(`primary`) 질감 버튼. `selected`로 토글 상태, `size`로 md/lg.
 - `IconButton` — 원형 목재 아이콘 버튼. `label`이 aria-label로 들어간다.
-- `Panel` — 목재(`wood`)/녹색(`green`) 질감 컨테이너.
+- `Panel` — 목재(`wood`)/녹색(`green`)/황금(`gold`) 질감 컨테이너.
 - `PieceIcon` — 장식용 폴리오미노 아이콘. `[r, c]` 좌표 목록을 CSS Grid로 그린다.
+- `Card` — 크림색 종이 질감 도형 카드. `title`/`meta`/`label`과 아이콘 슬롯, `selected`면 라벨이 "선택됨"으로 바뀐다.

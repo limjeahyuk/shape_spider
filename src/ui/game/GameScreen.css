@@ -1,0 +1,155 @@
+.game {
+  --cell: clamp(30px, min(calc((100svh - 500px) / 10), calc((100vw - 720px) / 10)), 58px);
+  min-height: 100svh;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 18px;
+  padding: 18px 28px 22px;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.04), transparent 60%),
+    radial-gradient(ellipse at 50% 50%, var(--color-bg-mid) 0%, var(--color-bg-deep) 100%);
+  font-family: var(--font-serif);
+  color: var(--color-cream);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 상단: 덱 · 손패 · 정보 */
+.game__top {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 320px;
+  align-items: start;
+  gap: 32px;
+}
+.game__top .hand {
+  max-width: 1020px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 가운데: 조립 판 · 보관함 */
+.game__middle {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 28px;
+}
+.board {
+  padding: 14px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.board__title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  color: var(--color-cream);
+  text-shadow: 0 1px 0 var(--color-text-shadow);
+}
+.board__rule {
+  width: 36px;
+  height: 1px;
+  background: var(--color-tan);
+  opacity: 0.6;
+}
+.board__foot {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--color-tan);
+}
+.board__size {
+  letter-spacing: 0.1em;
+}
+.board__hint {
+  flex: 1;
+  text-align: right;
+  color: var(--color-cream-soft);
+  transition: color 0.15s ease;
+}
+.board__hint.is-notice {
+  color: var(--color-select-invalid);
+}
+
+.game__side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 250px;
+  padding-top: 56px;
+}
+.game__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.game__resign {
+  margin-top: 6px;
+  align-self: center;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--color-tan);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.game__resign:hover {
+  opacity: 1;
+}
+.game__resign:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+/* 하단: 수집함 4개 */
+.game__bottom {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1240px) {
+  .game__top {
+    grid-template-columns: 130px minmax(0, 1fr) 240px;
+    gap: 20px;
+  }
+  .game__bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .game {
+    --cell: clamp(28px, calc((100vw - 90px) / 10), 58px);
+    padding: 14px;
+  }
+  .game__top {
+    grid-template-columns: 1fr;
+  }
+  .game__middle {
+    flex-direction: column;
+    align-items: center;
+  }
+  .game__side {
+    padding-top: 0;
+    width: 100%;
+    max-width: 420px;
+  }
+  .storage {
+    width: 100%;
+  }
+  .game__bottom {
+    grid-template-columns: 1fr;
+  }
+}

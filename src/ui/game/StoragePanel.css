@@ -1,0 +1,85 @@
+.storage {
+  width: 250px;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-serif);
+  color: var(--color-cream);
+}
+.storage__title {
+  margin: 0;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+.storage__well {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+.storage__slot {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 112px;
+  border-radius: 6px;
+  border: 1px dashed var(--color-slot-empty-border);
+  background: var(--color-slot-empty);
+  color: var(--color-tan);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  cursor: default;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: box-shadow 0.15s ease, filter 0.15s ease;
+}
+.storage__slot.can-store {
+  cursor: pointer;
+  border-style: solid;
+  border-color: var(--color-gold);
+  color: var(--color-cream);
+  animation: slot-invite 1s ease-in-out infinite;
+}
+.storage__slot.is-filled {
+  cursor: grab;
+  border-style: solid;
+  border-color: var(--color-panel-green-border);
+  background: linear-gradient(180deg, var(--color-panel-green-deep), var(--color-slot-empty));
+}
+.storage__slot.is-filled:hover {
+  filter: brightness(1.15);
+}
+.storage__slot.is-armed {
+  box-shadow: 0 0 0 2px var(--color-gold), 0 0 14px rgba(224, 178, 92, 0.4);
+}
+.storage__slot:disabled {
+  cursor: default;
+}
+.storage__slot:focus {
+  outline: none;
+}
+.storage__slot:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+.storage__size {
+  font-size: 11px;
+  color: var(--color-tan);
+}
+.storage__count {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-cream-soft);
+}
+@keyframes slot-invite {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 178, 92, 0.35); }
+  50% { box-shadow: 0 0 0 4px rgba(224, 178, 92, 0); }
+}

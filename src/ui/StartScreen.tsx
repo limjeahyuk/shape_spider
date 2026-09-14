@@ -1,18 +1,12 @@
 import { useState } from "react";
 import type { Difficulty } from "../core/types";
-import { DEFAULT_DIFFICULTY, DIFFICULTY_ORDER, getConfig } from "../core/config";
+import { DEFAULT_DIFFICULTY, DIFFICULTY_LABEL, DIFFICULTY_ORDER, getConfig } from "../core/config";
 import Button from "../components/Button";
 import IconButton from "../components/IconButton";
 import Panel from "../components/Panel";
 import PieceIcon from "../components/PieceIcon";
 import { Color } from "../theme";
 import "./StartScreen.css";
-
-const DIFFICULTY_LABEL: Record<Difficulty, string> = {
-  easy: "쉬움",
-  normal: "보통",
-  hard: "어려움",
-};
 
 // 타이틀 양옆 장식 조각 (X 펜토미노, Z 펜토미노)
 const PIECE_PLUS = [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]] as const;

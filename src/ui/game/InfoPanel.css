@@ -1,0 +1,26 @@
+.info {
+  padding: 4px 18px;
+  font-family: var(--font-serif);
+  color: var(--color-wood-dark);
+}
+.info__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-panel-gold-line) 55%, transparent);
+}
+.info__row:last-child {
+  border-bottom: none;
+}
+.info__label {
+  font-size: 14px;
+  opacity: 0.85;
+}
+.info__value {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.info__row.is-strong .info__value {
+  font-size: 28px;
+}

@@ -1,0 +1,47 @@
+.result {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+.result__panel {
+  width: min(440px, calc(100vw - 32px));
+  padding: 28px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: var(--font-serif);
+  color: var(--color-cream);
+}
+.result__title {
+  margin: 0;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.result__title.is-win {
+  color: var(--color-gold);
+}
+.result__lines {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 15px;
+}
+.result__lines > div {
+  display: flex;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+.result__total {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-panel-green-border);
+  font-size: 20px;
+  color: var(--color-gold);
+}

@@ -20,3 +20,15 @@
   background: linear-gradient(180deg, var(--color-panel-green) 0%, var(--color-panel-green-deep) 100%);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.45);
 }
+
+.ss-panel--gold {
+  border: 1px solid var(--color-panel-gold-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.1)),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0 2px, transparent 2px 9px),
+    linear-gradient(160deg, var(--color-panel-gold) 0%, var(--color-panel-gold-deep) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 30px rgba(0, 0, 0, 0.15),
+    0 14px 30px rgba(0, 0, 0, 0.5);
+}

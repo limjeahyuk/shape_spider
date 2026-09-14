@@ -1,24 +1,27 @@
 import { useState } from "react";
 import type { Difficulty } from "./core/types";
+import { getConfig } from "./core/config";
 import StartScreen from "./ui/StartScreen";
+import GameScreen from "./ui/game/GameScreen";
 
-type Screen = { name: "start" } | { name: "game"; difficulty: Difficulty };
+type Screen = { name: "start" } | { name: "game"; difficulty: Difficulty; run: number };
 
 function App() {
   const [screen, setScreen] = useState<Screen>({ name: "start" });
 
   if (screen.name === "game") {
-    // 게임 화면은 아직 미구현. 시작 화면으로 되돌아갈 수 있는 자리만 잡아둔다
+    // run 키로 새 게임마다 상태를 새로 만든다
     return (
-      <main style={{ minHeight: "100svh", display: "grid", placeItems: "center" }}>
-        <button type="button" onClick={() => setScreen({ name: "start" })}>
-          게임 화면 준비 중 ({screen.difficulty}) — 돌아가기
-        </button>
-      </main>
+      <GameScreen
+        key={screen.run}
+        difficulty={screen.difficulty}
+        config={getConfig(screen.difficulty)}
+        onExit={() => setScreen({ name: "start" })}
+      />
     );
   }
 
-  return <StartScreen onStart={(difficulty) => setScreen({ name: "game", difficulty })} />;
+  return <StartScreen onStart={(difficulty) => setScreen({ name: "game", difficulty, run: Date.now() })} />;
 }
 
 export default App;

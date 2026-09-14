@@ -1,4 +1,5 @@
 import type { Difficulty, GameConfig, ScoringConfig } from "./types";
+import { PENTOMINO_IDS } from "./shapes";
 
 // 정사각형 배점: 칸 수 x 10 (GAME_RULES.md 잠정값)
 const SQUARE_SCORE_PER_CELL = 10;
@@ -23,7 +24,10 @@ function buildConfig(targetSizes: number[]): GameConfig {
     colorCount: 4,
     targetSizes,
     handSize: 5,
-    storageEnabled: false,
+    storageEnabled: true,
+    storageSlots: 2,
+    cardsPerColor: 35,
+    shapeIds: [...PENTOMINO_IDS],
     maxRecycles: null,
     scoring: buildScoring(targetSizes),
   };
@@ -38,6 +42,12 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, GameConfig> = {
 
 export const DIFFICULTY_ORDER: Difficulty[] = ["easy", "normal", "hard"];
 export const DEFAULT_DIFFICULTY: Difficulty = "normal";
+
+export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  easy: "쉬움",
+  normal: "보통",
+  hard: "어려움",
+};
 
 export function getConfig(difficulty: Difficulty): GameConfig {
   return DIFFICULTY_PRESETS[difficulty];
