@@ -5,6 +5,9 @@ import PieceIcon from "../../components/PieceIcon";
 import { pieceColor, toIconCells } from "./palette";
 import "./HandTray.css";
 
+// 손패 아이콘은 가장 큰 도형 기준 고정 격자에 그린다
+const MAX_SPAN = 5;
+
 interface HandTrayProps {
   hand: CardData[];
   handSize: number;
@@ -57,7 +60,7 @@ function HandTray({ hand, handSize, armedIndex, armedShape, disabled, onPointerD
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           >
-            <PieceIcon cells={toIconCells(shape.cells)} color={p.color} shade={p.shade} cellSize={22} />
+            <PieceIcon cells={toIconCells(shape.cells)} color={p.color} shade={p.shade} span={MAX_SPAN} />
           </Card>
         );
       })}

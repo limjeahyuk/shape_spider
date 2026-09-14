@@ -67,8 +67,15 @@
 }
 .ss-card__body {
   flex: 1;
-  display: grid;
-  place-items: center;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* 아이콘은 몸통 높이에 맞춘 정사각형이라 도형 크기·회전에 카드가 안 늘어난다 */
+.ss-card__body > .ss-piece {
+  height: 100%;
+  aspect-ratio: 1;
 }
 .ss-card__label {
   font-size: 13px;
