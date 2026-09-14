@@ -3,15 +3,26 @@ import { getShape } from "./shapes";
 
 export type Rng = () => number;
 
+// 한 색상분 도형 목록. 칸 수별 장수는 비율을 최대 잉여 방식으로 반올림하고, 같은 크기 안에서는 돌아가며 채운다
+export function colorRecipe(config: GameConfig): string[] {
+  const sizes = Object.keys(config.sizeRatio).map(Number);
+  const raw = sizes.map((s) => config.sizeRatio[s] * config.cardsPerColor);
+  const counts = raw.map(Math.floor);
+  const byFraction = sizes.map((_, i) => i).sort((a, b) => raw[b] - counts[b] - (raw[a] - counts[a]));
+  for (let k = 0; k < config.cardsPerColor - counts.reduce((a, b) => a + b, 0); k++) counts[byFraction[k]]++;
+  return sizes.flatMap((size, i) => {
+    const ids = config.shapeIds.filter((id) => getShape(id).size === size);
+    return ids.length ? Array.from({ length: counts[i] }, (_, j) => ids[j % ids.length]) : [];
+  });
+}
+
 // 색상별 동일 분포로 카드를 만든 뒤 한 번만 섞는다. 이후 순서는 고정
 export function createDeck(config: GameConfig, rng: Rng = Math.random): Deck {
   const cards: Card[] = [];
+  const recipe = colorRecipe(config);
   let pieceId = 1;
   for (let color = 0; color < config.colorCount; color++) {
-    for (let i = 0; i < config.cardsPerColor; i++) {
-      const shapeId = config.shapeIds[i % config.shapeIds.length];
-      cards.push({ pieceId: pieceId++, shape: getShape(shapeId), color });
-    }
+    for (const shapeId of recipe) cards.push({ pieceId: pieceId++, shape: getShape(shapeId), color });
   }
   return { pending: shuffle(cards, rng), hand: [], recycled: [], recycleCount: 0 };
 }

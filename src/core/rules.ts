@@ -1,13 +1,16 @@
 import type { Board, CollectionTrack, ColorId, Coord, Destination, GameConfig, GameState, PieceShape, Score, ScoringConfig } from "./types";
 import { at, canPlace, connectedGroup, findExtractPositions, squareCells } from "./board";
 import { allCards } from "./deck";
+import { rotationsOf } from "./shapes";
 
 // ── 배치 가능 여부 ─────────────────────────────────────
+// 회전한 형태까지 모두 검사한다. 같은 형태는 한 번만 본다
 export function hasAnyPlacement(board: Board, shapes: PieceShape[]): boolean {
   const seen = new Set<string>();
-  for (const shape of shapes) {
-    if (seen.has(shape.id)) continue;
-    seen.add(shape.id);
+  for (const shape of shapes.flatMap(rotationsOf)) {
+    const key = JSON.stringify(shape.cells);
+    if (seen.has(key)) continue;
+    seen.add(key);
     for (let r = 0; r < board.rows; r++) {
       for (let c = 0; c < board.cols; c++) {
         if (canPlace(board, shape, { r, c })) return true;

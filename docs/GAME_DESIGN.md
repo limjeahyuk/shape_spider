@@ -83,9 +83,10 @@ interface CollectionTrack {
   collected: number[]; // 완료한 크기 목록 [3, 4, ...]
 }
 
-// ── 보관함 (도입 시) ───────────────────────────────────
+// ── 보관함 ─────────────────────────────────────────────
 interface Storage {
-  slot: { color: ColorId; cells: Coord[] } | null; // 한 조각만
+  slots: ({ color: ColorId; shape: PieceShape } | null)[]; // 2칸 고정
+  locks: number[]; // 칸별 남은 잠금 횟수. 꺼내면 storageCooldown으로 설정, 판에 도형을 올릴 때마다 1 감소
 }
 
 // ── 선택 상태 ──────────────────────────────────────────
@@ -107,6 +108,11 @@ interface GameConfig {
   targetSizes: number[]; // 잠정 기본값 [3,4,5,6]. 상위 난이도는 [3,4,5,6,7,8]
   handSize: number; // 기본 5
   storageEnabled: boolean;
+  storageSlots: number; // 2 고정
+  storageCooldown: number; // 쉬움 0 · 보통 1 · 어려움 3
+  cardsPerColor: number; // 35
+  shapeIds: string[]; // 사용할 도형 카탈로그
+  sizeRatio: Record<number, number>; // 칸 수별 비율 { 2: 0.1, 3: 0.2, 4: 0.35, 5: 0.35 }
   maxRecycles: number | null; // 재구성 상한. 잠정 null(무제한) — 정체 판정으로 종료시킨다
   scoring: ScoringConfig;
 }

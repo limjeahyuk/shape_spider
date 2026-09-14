@@ -16,8 +16,10 @@ export interface GameConfig {
   handSize: number;
   storageEnabled: boolean;
   storageSlots: number;
+  storageCooldown: number; // 보관함에서 꺼낸 뒤 판에 도형을 이만큼 올려야 그 칸이 다시 열린다
   cardsPerColor: number;
   shapeIds: string[];
+  sizeRatio: Record<number, number>; // 칸 수별 카드 비율. 합계 1
   maxRecycles: number | null;
   scoring: ScoringConfig;
 }
@@ -72,6 +74,7 @@ export interface StoredPiece {
 
 export interface Storage {
   slots: (StoredPiece | null)[];
+  locks: number[]; // 칸별 남은 잠금 횟수. 0이면 열림
 }
 
 // ── 선택 ───────────────────────────────────────────────

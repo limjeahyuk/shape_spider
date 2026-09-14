@@ -18,7 +18,7 @@ import { at, canPlace, shapeCellsAt } from "../../core/board";
 import { remainingCount } from "../../core/deck";
 import { createGame, reduce } from "../../core/game";
 import { remainingTargets } from "../../core/rules";
-import { grabCell } from "../../core/shapes";
+import { grabCell, rotateShape } from "../../core/shapes";
 import Button from "../../components/Button";
 import Panel from "../../components/Panel";
 import BoardGrid, { type Ghost } from "./BoardGrid";
@@ -69,6 +69,8 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const cardDrag = useRef<CardDrag | null>(null);
   const frameDrag = useRef<FrameDrag | null>(null);
   const [isTouch, setIsTouch] = useState(false);
+  // 집어 든 조각의 시계 방향 90도 회전 횟수. 다른 조각을 집거나 내려놓으면 0으로 돌아간다
+  const [rotation, setRotation] = useState(0);
 
   const playing = game.status === "playing";
 
@@ -93,13 +95,14 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     color: number;
   } | null => {
     if (!armed) return null;
-    if (armed.source === "hand") {
-      const card = game.deck.hand[armed.index];
-      return card ? { shape: card.shape, color: card.color } : null;
-    }
-    const slot = game.storage.slots[armed.index];
-    return slot ? { shape: slot.shape, color: slot.color } : null;
-  }, [armed, game.deck.hand, game.storage.slots]);
+    const piece =
+      armed.source === "hand"
+        ? game.deck.hand[armed.index]
+        : game.storage.slots[armed.index];
+    return piece
+      ? { shape: rotateShape(piece.shape, rotation), color: piece.color }
+      : null;
+  }, [armed, rotation, game.deck.hand, game.storage.slots]);
 
   // 집어 든 조각의 앵커: 포인터 아래 칸에서 잡은 칸만큼 빼고, 터치면 손가락 위로 올린다
   const anchorFor = useCallback(
@@ -128,6 +131,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const disarm = useCallback(() => {
     setArmed(null);
     setHover(null);
+    setRotation(0);
   }, []);
 
   const tryPlace = useCallback(
@@ -136,21 +140,35 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       const anchor = anchorFor(cell, armedPiece.shape);
       if (!canPlace(game.board, armedPiece.shape, anchor)) return false;
       if (armed.source === "hand")
-        dispatch({ type: "PLACE_PIECE", handIndex: armed.index, anchor });
-      else dispatch({ type: "PLACE_STORED", slotIndex: armed.index, anchor });
+        dispatch({
+          type: "PLACE_PIECE",
+          handIndex: armed.index,
+          anchor,
+          rotation,
+        });
+      else
+        dispatch({
+          type: "PLACE_STORED",
+          slotIndex: armed.index,
+          anchor,
+          rotation,
+        });
       return true;
     },
-    [armed, armedPiece, anchorFor, game.board],
+    [armed, armedPiece, anchorFor, rotation, game.board],
   );
 
-  // ── 카드(손패/보관함) 포인터 처리: 클릭이면 집기 토글, 끌면 드래그 배치 ──
+  // ── 카드(손패/보관함) 포인터 처리: 클릭이면 집기, 집은 카드를 다시 클릭하면 회전, 끌면 드래그 배치 ──
   const onCardDown =
     (source: Armed["source"]) =>
     (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
-      if (!playing) return;
+      // 바깥 클릭 해제(onGamePointerDown)로 전파되지 않게 막는다
+      e.stopPropagation();
+      if (!playing || e.button !== 0) return;
       e.currentTarget.setPointerCapture(e.pointerId);
       setIsTouch(e.pointerType === "touch");
       const wasArmed = armed?.source === source && armed.index === index;
+      if (!wasArmed) setRotation(0);
       cardDrag.current = {
         source,
         index,
@@ -184,13 +202,18 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       if (cell) tryPlace(cell);
       disarm();
     } else if (d.wasArmed) {
-      disarm();
+      setRotation((r) => (r + 1) % 4);
     }
+  };
+
+  // 카드와 보드 밖을 누르면 집어 든 조각을 내려놓는다
+  const onGamePointerDown = (e: ReactPointerEvent<HTMLElement>) => {
+    if (armed && !gridRef.current?.contains(e.target as Node)) disarm();
   };
 
   // ── 보드 포인터 처리 ──
   const onBoardDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!playing) return;
+    if (!playing || e.button !== 0) return;
     const cell = cellFromPoint(e.clientX, e.clientY);
     if (!cell) return;
     setIsTouch(e.pointerType === "touch");
@@ -333,7 +356,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   ));
 
   return (
-    <main className="game">
+    <main className="game" onPointerDown={onGamePointerDown}>
       <header className="game__top">
         <div className="game__deck">
           <DeckCard
@@ -362,6 +385,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
           hand={game.deck.hand}
           handSize={config.handSize}
           armedIndex={activeArmed?.source === "hand" ? activeArmed.index : null}
+          armedShape={armedPiece?.shape ?? null}
           disabled={!playing}
           onPointerDown={onCardDown("hand")}
           onPointerMove={onCardMove}
@@ -415,7 +439,8 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
               armedIndex={
                 activeArmed?.source === "storage" ? activeArmed.index : null
               }
-              canStore={!!sel && game.storage.slots.some((s) => s === null)}
+              armedShape={armedPiece?.shape ?? null}
+              canStore={!!sel}
               disabled={!playing}
               onStore={onStore}
               onPointerDown={onCardDown("storage")}

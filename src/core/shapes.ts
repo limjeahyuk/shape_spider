@@ -1,22 +1,32 @@
 import type { Coord, PieceShape } from "./types";
 
-// 펜토미노 12종. 회전·반전 없이 제시된 방향 그대로 사용한다
+// 2~5칸 폴리오미노 22종. 회전만 가능하고 반전은 없으므로 S/Z, J/L 등은 서로 다른 도형이다
 const RAW: Record<string, [number, number][]> = {
-  F: [[0, 1], [0, 2], [1, 0], [1, 1], [2, 1]],
-  I: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]],
-  L: [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1]],
-  N: [[0, 1], [1, 1], [2, 0], [2, 1], [3, 0]],
-  P: [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0]],
-  T: [[0, 0], [0, 1], [0, 2], [1, 1], [2, 1]],
-  U: [[0, 0], [0, 2], [1, 0], [1, 1], [1, 2]],
-  V: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]],
-  W: [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]],
-  X: [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]],
-  Y: [[0, 1], [1, 0], [1, 1], [2, 1], [3, 1]],
-  Z: [[0, 0], [0, 1], [1, 1], [2, 1], [2, 2]],
+  D2: [[0, 0], [0, 1]],
+  I3: [[0, 0], [0, 1], [0, 2]],
+  L3: [[0, 0], [1, 0], [1, 1]],
+  I4: [[0, 0], [0, 1], [0, 2], [0, 3]],
+  O4: [[0, 0], [0, 1], [1, 0], [1, 1]],
+  T4: [[0, 0], [0, 1], [0, 2], [1, 1]],
+  S4: [[0, 1], [0, 2], [1, 0], [1, 1]],
+  Z4: [[0, 0], [0, 1], [1, 1], [1, 2]],
+  J4: [[0, 1], [1, 1], [2, 0], [2, 1]],
+  L4: [[0, 0], [1, 0], [2, 0], [2, 1]],
+  F5: [[0, 1], [0, 2], [1, 0], [1, 1], [2, 1]],
+  I5: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]],
+  L5: [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1]],
+  N5: [[0, 1], [1, 1], [2, 0], [2, 1], [3, 0]],
+  P5: [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0]],
+  T5: [[0, 0], [0, 1], [0, 2], [1, 1], [2, 1]],
+  U5: [[0, 0], [0, 2], [1, 0], [1, 1], [1, 2]],
+  V5: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]],
+  W5: [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]],
+  X5: [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]],
+  Y5: [[0, 1], [1, 0], [1, 1], [2, 1], [3, 1]],
+  Z5: [[0, 0], [0, 1], [1, 1], [2, 1], [2, 2]],
 };
 
-export const PENTOMINO_IDS = Object.keys(RAW);
+export const SHAPE_IDS = Object.keys(RAW);
 
 export const SHAPE_CATALOG: Record<string, PieceShape> = Object.fromEntries(
   Object.entries(RAW).map(([id, cells]) => [id, makeShape(id, cells.map(([r, c]) => ({ r, c })))]),
@@ -36,6 +46,28 @@ export function makeShape(id: string, cells: Coord[]): PieceShape {
     .map((p) => ({ r: p.r - minR, c: p.c - minC }))
     .sort((a, b) => a.r - b.r || a.c - b.c);
   return { id, cells: normalized, size: normalized.length };
+}
+
+// 시계 방향 90도 회전을 times번 적용한다. id는 유지한다
+export function rotateShape(shape: PieceShape, times: number): PieceShape {
+  let cells = shape.cells;
+  for (let i = 0; i < ((times % 4) + 4) % 4; i++) cells = cells.map((p) => ({ r: p.c, c: -p.r }));
+  return cells === shape.cells ? shape : makeShape(shape.id, cells);
+}
+
+// 중복을 제거한 회전 형태 목록 (O4는 1개, I는 2개 등)
+export function rotationsOf(shape: PieceShape): PieceShape[] {
+  const out: PieceShape[] = [];
+  const seen = new Set<string>();
+  for (let t = 0; t < 4; t++) {
+    const s = rotateShape(shape, t);
+    const key = JSON.stringify(s.cells);
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(s);
+    }
+  }
+  return out;
 }
 
 export function shapeBounds(shape: PieceShape): { rows: number; cols: number } {

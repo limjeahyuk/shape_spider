@@ -2,11 +2,11 @@ import type { Coord, GameConfig, GameState, Snapshot } from "./types";
 import { at, canPlace, connectedGroup, createBoard, extract, place, removeCells, snapToNearestValid, squareCells } from "./board";
 import { createDeck, drawHand, passHand, type Rng } from "./deck";
 import { applyRecyclePenalty, collectTarget, computeTotal, createTracks, isCleared, isStuck, scoreSquare } from "./rules";
-import { makeShape } from "./shapes";
+import { makeShape, rotateShape } from "./shapes";
 
 export type GameAction =
-  | { type: "PLACE_PIECE"; handIndex: number; anchor: Coord }
-  | { type: "PLACE_STORED"; slotIndex: number; anchor: Coord }
+  | { type: "PLACE_PIECE"; handIndex: number; anchor: Coord; rotation: number }
+  | { type: "PLACE_STORED"; slotIndex: number; anchor: Coord; rotation: number }
   | { type: "PASS_HAND" }
   | { type: "BEGIN_SELECTION"; cell: Coord }
   | { type: "MOVE_SELECTION"; anchor: Coord }
@@ -23,7 +23,10 @@ export function createGame(config: GameConfig, rng: Rng = Math.random): GameStat
     board: createBoard(config.rows, config.cols),
     deck,
     collection: createTracks(config),
-    storage: { slots: Array.from({ length: config.storageEnabled ? config.storageSlots : 0 }, () => null) },
+    storage: {
+      slots: Array.from({ length: config.storageEnabled ? config.storageSlots : 0 }, () => null),
+      locks: Array.from({ length: config.storageEnabled ? config.storageSlots : 0 }, () => 0),
+    },
     selection: null,
     score: computeTotal({ collected: 0, penalty: 0, bonus: 0 }, config.scoring),
     prev: null,
@@ -32,6 +35,11 @@ export function createGame(config: GameConfig, rng: Rng = Math.random): GameStat
     placedSinceRebuild: true,
   };
   return base;
+}
+
+// 판에 도형을 1개 올릴 때마다 잠긴 보관함 칸의 남은 횟수를 줄인다
+function tickLocks(locks: number[]): number[] {
+  return locks.map((n) => Math.max(0, n - 1));
 }
 
 function snapshot(state: GameState): Snapshot {
@@ -72,14 +80,17 @@ export function reduce(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "PLACE_PIECE": {
       const card = state.deck.hand[action.handIndex];
-      if (!card || !canPlace(state.board, card.shape, action.anchor)) return state;
-      const board = place(state.board, card.shape, card.color, state.nextPieceId, action.anchor);
+      if (!card) return state;
+      const shape = rotateShape(card.shape, action.rotation);
+      if (!canPlace(state.board, shape, action.anchor)) return state;
+      const board = place(state.board, shape, card.color, state.nextPieceId, action.anchor);
       const hand = state.deck.hand.filter((_, i) => i !== action.handIndex);
       const next: GameState = {
         ...state,
         prev: snapshot(state),
         board,
         deck: { ...state.deck, hand },
+        storage: { ...state.storage, locks: tickLocks(state.storage.locks) },
         nextPieceId: state.nextPieceId + 1,
         placedSinceRebuild: true,
         selection: null,
@@ -89,15 +100,20 @@ export function reduce(state: GameState, action: GameAction): GameState {
 
     case "PLACE_STORED": {
       const piece = state.storage.slots[action.slotIndex];
-      if (!piece || !canPlace(state.board, piece.shape, action.anchor)) return state;
-      const board = place(state.board, piece.shape, piece.color, state.nextPieceId, action.anchor);
+      if (!piece) return state;
+      const shape = rotateShape(piece.shape, action.rotation);
+      if (!canPlace(state.board, shape, action.anchor)) return state;
+      const board = place(state.board, shape, piece.color, state.nextPieceId, action.anchor);
       const slots = state.storage.slots.with(action.slotIndex, null);
+      // 꺼낸 칸은 이번 배치를 세지 않고 쿨타임만큼 잠근다
+      const locks = tickLocks(state.storage.locks).with(action.slotIndex, state.config.storageCooldown);
       return finalize({
         ...state,
         prev: snapshot(state),
         board,
-        storage: { slots },
+        storage: { slots, locks },
         nextPieceId: state.nextPieceId + 1,
+        placedSinceRebuild: true,
         selection: null,
       });
     }
@@ -145,13 +161,13 @@ export function reduce(state: GameState, action: GameAction): GameState {
       return state.selection ? { ...state, selection: null } : state;
 
     case "STORE_GROUP": {
-      if (state.storage.slots[action.slotIndex] !== null || action.slotIndex >= state.storage.slots.length) return state;
+      if (state.storage.slots[action.slotIndex] !== null || state.storage.locks[action.slotIndex] !== 0) return state;
       const group = connectedGroup(state.board, action.cell);
       if (group.length === 0) return state;
       const color = at(state.board, action.cell.r, action.cell.c)!.color;
       const shape = makeShape(`stored-${state.nextPieceId}`, group);
       const slots = state.storage.slots.with(action.slotIndex, { color, shape });
-      return finalize({ ...state, prev: snapshot(state), board: removeCells(state.board, group), storage: { slots }, selection: null });
+      return finalize({ ...state, prev: snapshot(state), board: removeCells(state.board, group), storage: { ...state.storage, slots }, selection: null });
     }
 
     case "UNDO": {

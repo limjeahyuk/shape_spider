@@ -83,3 +83,10 @@
   0%, 100% { box-shadow: 0 0 0 0 rgba(224, 178, 92, 0.35); }
   50% { box-shadow: 0 0 0 4px rgba(224, 178, 92, 0); }
 }
+.storage__slot.is-locked {
+  border-style: solid;
+  border-color: var(--color-wood-border);
+  background: var(--color-wood-dark);
+  color: var(--color-tan);
+  opacity: 0.7;
+}

@@ -23,7 +23,7 @@ function StartScreen({ onStart, onSettings }: StartScreenProps) {
   const sizeRange = `${sizes[0]}×${sizes[0]} ~ ${sizes.at(-1)}×${sizes.at(-1)}`;
 
   const steps = [
-    "덱에서 펼쳐진 카드 5장 중 하나를 골라 조각을 꺼냅니다.",
+    "펼쳐진 카드 5장 중 하나를 골라 조각을 꺼냅니다. 한 번 더 누르면 90도 회전합니다.",
     "조립 판에 조각을 놓아 빈틈 없는 정사각형을 만듭니다.",
     `완성한 정사각형은 색깔별 수집함의 ${sizeRange} 칸에 들어갑니다.`,
     "수집함을 다 채우거나 쓸수있는 카드가 없을때 게임이 끝납니다",
@@ -35,7 +35,7 @@ function StartScreen({ onStart, onSettings }: StartScreenProps) {
         <header className="start__header">
           <p className="start__kicker">
             <span className="start__kicker-line" />
-            <span>PENTOMINO PUZZLE</span>
+            <span>POLYOMINO PUZZLE</span>
             <span className="start__kicker-line" />
           </p>
           <div className="start__title-row">
@@ -43,7 +43,7 @@ function StartScreen({ onStart, onSettings }: StartScreenProps) {
             <h1 className="start__title">SHAPE SPIDER</h1>
             <PieceIcon cells={PIECE_ZIG} color={Color.PIECE_GREEN} shade={Color.PIECE_GREEN_DEEP} />
           </div>
-          <p className="start__tagline">다섯 칸 조각으로 정사각형을 완성하세요</p>
+          <p className="start__tagline">여러 모양의 조각으로 정사각형을 완성하세요</p>
         </header>
 
         <Panel tone="green" className="start__info">

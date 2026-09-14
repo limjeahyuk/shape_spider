@@ -1,5 +1,5 @@
 import { useState, type PointerEvent } from "react";
-import type { Card as CardData } from "../../core/types";
+import type { Card as CardData, PieceShape } from "../../core/types";
 import Card from "../../components/Card";
 import PieceIcon from "../../components/PieceIcon";
 import { pieceColor, toIconCells } from "./palette";
@@ -9,6 +9,7 @@ interface HandTrayProps {
   hand: CardData[];
   handSize: number;
   armedIndex: number | null;
+  armedShape: PieceShape | null; // 집어 든 카드의 회전된 모양
   disabled: boolean;
   onPointerDown: (e: PointerEvent<HTMLButtonElement>, handIndex: number) => void;
   onPointerMove: (e: PointerEvent<HTMLButtonElement>) => void;
@@ -30,7 +31,7 @@ function same(a: Layout, b: Layout): boolean {
 }
 
 // 제시된 손패. 배치한 자리는 빈 슬롯으로 남겨 카드 위치가 흔들리지 않게 한다
-function HandTray({ hand, handSize, armedIndex, disabled, onPointerDown, onPointerMove, onPointerUp }: HandTrayProps) {
+function HandTray({ hand, handSize, armedIndex, armedShape, disabled, onPointerDown, onPointerMove, onPointerUp }: HandTrayProps) {
   const [layout, setLayout] = useState<Layout>(() => nextLayout([], hand, handSize));
   const computed = nextLayout(layout, hand, handSize);
   if (!same(computed, layout)) setLayout(computed);
@@ -42,6 +43,7 @@ function HandTray({ hand, handSize, armedIndex, disabled, onPointerDown, onPoint
         const card = handIndex >= 0 ? hand[handIndex] : null;
         if (!card) return <div key={`empty-${slot}`} className="hand__empty" aria-hidden="true" />;
         const p = pieceColor(card.color);
+        const shape = armedIndex === handIndex && armedShape ? armedShape : card.shape;
         return (
           <Card
             key={card.pieceId}
@@ -55,7 +57,7 @@ function HandTray({ hand, handSize, armedIndex, disabled, onPointerDown, onPoint
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           >
-            <PieceIcon cells={toIconCells(card.shape.cells)} color={p.color} shade={p.shade} cellSize={22} />
+            <PieceIcon cells={toIconCells(shape.cells)} color={p.color} shade={p.shade} cellSize={22} />
           </Card>
         );
       })}

@@ -1,5 +1,5 @@
 import type { PointerEvent } from "react";
-import type { Storage } from "../../core/types";
+import type { PieceShape, Storage } from "../../core/types";
 import Panel from "../../components/Panel";
 import PieceIcon from "../../components/PieceIcon";
 import { pieceColor, toIconCells } from "./palette";
@@ -18,6 +18,7 @@ function iconCellSize(cells: { r: number; c: number }[]): number {
 interface StoragePanelProps {
   storage: Storage;
   armedIndex: number | null;
+  armedShape: PieceShape | null; // 집어 든 조각의 회전된 모양
   canStore: boolean;
   disabled: boolean;
   onStore: (slotIndex: number) => void;
@@ -27,14 +28,18 @@ interface StoragePanelProps {
 }
 
 // 임시 보관함. 빈 칸은 선택한 덩어리를 받고, 찬 칸은 손패 카드처럼 다시 꺼내 놓는다
-function StoragePanel({ storage, armedIndex, canStore, disabled, onStore, onPointerDown, onPointerMove, onPointerUp }: StoragePanelProps) {
+// 꺼낸 칸은 판에 도형을 쿨타임만큼 올릴 때까지 잠긴다
+function StoragePanel({ storage, armedIndex, armedShape, canStore, disabled, onStore, onPointerDown, onPointerMove, onPointerUp }: StoragePanelProps) {
   const used = storage.slots.filter(Boolean).length;
   return (
     <Panel tone="wood" className="storage">
       <h2 className="storage__title">임시 보관함</h2>
       <Panel tone="green" className="storage__well">
-        {storage.slots.map((slot, i) =>
-          slot ? (
+        {storage.slots.map((slot, i) => {
+          const shape = slot && (armedIndex === i && armedShape ? armedShape : slot.shape);
+          const locked = storage.locks[i] > 0;
+          const open = canStore && !locked;
+          return slot && shape ? (
             <button
               key={i}
               type="button"
@@ -47,21 +52,26 @@ function StoragePanel({ storage, armedIndex, canStore, disabled, onStore, onPoin
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
             >
-              <PieceIcon cells={toIconCells(slot.shape.cells)} color={pieceColor(slot.color).color} shade={pieceColor(slot.color).shade} cellSize={iconCellSize(slot.shape.cells)} />
+              <PieceIcon cells={toIconCells(shape.cells)} color={pieceColor(slot.color).color} shade={pieceColor(slot.color).shade} cellSize={iconCellSize(shape.cells)} />
               <span className="storage__size">{slot.shape.size}칸</span>
             </button>
           ) : (
             <button
               key={i}
               type="button"
-              className={`storage__slot ${canStore ? "can-store" : ""}`}
-              disabled={disabled || !canStore}
+              className={`storage__slot ${open ? "can-store" : ""} ${locked ? "is-locked" : ""}`}
+              disabled={disabled || !open}
               onClick={() => onStore(i)}
             >
-              {canStore ? "여기에 보관" : "빈 칸"}
+              {locked ? (
+                <>
+                  잠김
+                  <span className="storage__size">도형 {storage.locks[i]}개 더 놓기</span>
+                </>
+              ) : open ? "여기에 보관" : "빈 칸"}
             </button>
-          ),
-        )}
+          );
+        })}
       </Panel>
       <p className="storage__count">
         {used} / {storage.slots.length}
