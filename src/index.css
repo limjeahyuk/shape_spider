@@ -18,3 +18,8 @@ button {
   font: inherit;
   margin: 0;
 }
+
+/* 날아온 조각이 도착할 때 슬롯이 채워지는 연출 */
+@keyframes land {
+  from { opacity: 0; transform: scale(0.5); }
+}

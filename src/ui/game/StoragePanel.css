@@ -52,6 +52,9 @@
   border-color: var(--color-panel-green-border);
   background: linear-gradient(180deg, var(--color-panel-green-deep), var(--color-slot-empty));
 }
+.storage__slot.is-filled .ss-piece {
+  animation: land 0.2s 0.3s backwards;
+}
 .storage__slot.is-filled:hover {
   filter: brightness(1.15);
 }

@@ -15,7 +15,7 @@ function CollectionTray({ track, targetSizes }: CollectionTrayProps) {
   const done = track.collected.length;
   const style = { "--piece-color": p.color, "--piece-shade": p.shade } as CSSProperties;
   return (
-    <Panel tone="wood" className="tray" style={style}>
+    <Panel tone="wood" className="tray" style={style} data-color={track.color}>
       <Panel tone="green" className="tray__well">
         {targetSizes.map((size) => {
           const filled = track.collected.includes(size);

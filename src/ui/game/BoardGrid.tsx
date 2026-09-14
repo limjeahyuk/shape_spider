@@ -1,6 +1,7 @@
 import { memo, type CSSProperties, type PointerEventHandler, type RefObject } from "react";
 import type { Board, Coord, Selection } from "../../core/types";
 import { outlineEdges } from "../../core/board";
+import { boundsOf } from "./fly";
 import { pieceColor } from "./palette";
 import "./BoardGrid.css";
 
@@ -47,12 +48,6 @@ function overlayRect(r: number, c: number, rows: number, cols: number): CSSPrope
     width: `calc(var(--cell) * ${cols})`,
     height: `calc(var(--cell) * ${rows})`,
   };
-}
-
-function boundsOf(cells: Coord[]) {
-  const rs = cells.map((p) => p.r);
-  const cs = cells.map((p) => p.c);
-  return { r0: Math.min(...rs), c0: Math.min(...cs), r1: Math.max(...rs), c1: Math.max(...cs) };
 }
 
 // 임의 칸 집합 오버레이 (배치 미리보기, 보관 대상 덩어리). div 1개 안에 span으로 그린다

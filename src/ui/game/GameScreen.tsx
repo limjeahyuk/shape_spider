@@ -14,7 +14,7 @@ import type {
   PieceShape,
 } from "../../core/types";
 import { DIFFICULTY_LABEL } from "../../core/config";
-import { at, canPlace, shapeCellsAt } from "../../core/board";
+import { at, canPlace, connectedGroup, shapeCellsAt, squareCells } from "../../core/board";
 import { remainingCount } from "../../core/deck";
 import { createGame, reduce } from "../../core/game";
 import { remainingTargets } from "../../core/rules";
@@ -25,6 +25,7 @@ import Panel from "../../components/Panel";
 import BoardGrid, { type Ghost } from "./BoardGrid";
 import CollectionTray from "./CollectionTray";
 import DeckCard from "./DeckCard";
+import { cellsNode, boundsOf, fly } from "./fly";
 import HandTray from "./HandTray";
 import InfoPanel from "./InfoPanel";
 import ResultOverlay from "./ResultOverlay";
@@ -165,6 +166,44 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     [armed, armedPiece, anchorFor, rotation, game.board],
   );
 
+  // ── 연출: 판 위 칸 집합을 to 요소로 날린다 ──
+  const flyCells = useCallback(
+    (cells: Coord[], color: number, to: Element | null | undefined) => {
+      const grid = gridRef.current;
+      if (!grid || !to || cells.length === 0) return;
+      const g = grid.getBoundingClientRect();
+      const size = g.width / game.board.cols;
+      const b = boundsOf(cells);
+      const from = new DOMRect(g.left + b.c0 * size, g.top + b.r0 * size, (b.c1 - b.c0 + 1) * size, (b.r1 - b.r0 + 1) * size);
+      fly(cellsNode(cells, color), from, to.getBoundingClientRect());
+    },
+    [game.board.cols],
+  );
+
+  const confirmSelection = useCallback(() => {
+    const sel = game.selection;
+    if (sel?.kind !== "collect") return;
+    flyCells(squareCells(sel.anchor, sel.size), sel.color, document.querySelector(`.tray[data-color="${sel.color}"] .is-next`));
+    dispatch({ type: "CONFIRM_SELECTION" });
+  }, [game.selection, flyCells]);
+
+  const storeGroup = (slotIndex: number) => {
+    const sel = game.selection;
+    if (!sel) return;
+    flyCells(connectedGroup(game.board, sel.origin), sel.color, document.querySelectorAll(".storage__slot")[slotIndex]);
+    dispatch({ type: "STORE_GROUP", cell: sel.origin, slotIndex });
+  };
+
+  // 손패를 넘기면 남은 카드가 덱으로 날아 돌아간다
+  const passHand = () => {
+    disarm();
+    const deck = document.querySelector(".deck__stack")?.getBoundingClientRect();
+    if (deck)
+      for (const el of document.querySelectorAll<HTMLElement>(".hand .ss-card"))
+        fly(el.cloneNode(true) as HTMLElement, el.getBoundingClientRect(), deck, el.parentElement!, 250);
+    dispatch({ type: "PASS_HAND" });
+  };
+
   // ── 카드(손패/보관함) 포인터 처리: 클릭이면 집기, 집은 카드를 다시 클릭하면 회전, 끌면 드래그 배치 ──
   const onCardDown =
     (source: Armed["source"]) =>
@@ -260,7 +299,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     if (sel?.kind === "pick" && sel.group.some((p) => p.r === cell.r && p.c === cell.c)) {
       const slotIndex = game.storage.slots.findIndex((s, i) => s === null && game.storage.locks[i] === 0);
       if (config.storageEnabled && slotIndex >= 0) {
-        dispatch({ type: "STORE_GROUP", cell: sel.origin, slotIndex });
+        storeGroup(slotIndex);
         return;
       }
     }
@@ -292,7 +331,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     const f = frameDrag.current;
     if (!f || f.pointerId !== e.pointerId) return;
     frameDrag.current = null;
-    if (!f.moved) dispatch({ type: "CONFIRM_SELECTION" });
+    if (!f.moved) confirmSelection();
   };
 
   const onBoardLeave = () => {
@@ -311,7 +350,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       const sel = game.selection;
       if (sel?.kind !== "collect") return;
       if (e.key === "Enter") {
-        dispatch({ type: "CONFIRM_SELECTION" });
+        confirmSelection();
         return;
       }
       const dir: Record<string, Coord> = {
@@ -340,16 +379,10 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [playing, game.selection, disarm]);
+  }, [playing, game.selection, disarm, confirmSelection]);
 
   // 넘기기·되돌리기로 집어 든 조각이 사라지면 렌더 단계에서 해제된 것으로 취급한다
   const activeArmed = armedPiece ? armed : null;
-
-  const onStore = (slotIndex: number) => {
-    const sel = game.selection;
-    if (!sel) return;
-    dispatch({ type: "STORE_GROUP", cell: sel.origin, slotIndex });
-  };
 
   const infoRows = [
     { label: "난이도", value: DIFFICULTY_LABEL[difficulty] },
@@ -370,10 +403,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       disabled={
         !playing || remainingCount(game.deck) + game.deck.hand.length === 0
       }
-      onClick={() => {
-        disarm();
-        dispatch({ type: "PASS_HAND" });
-      }}
+      onClick={passHand}
     />
   );
   const undoButton = (
@@ -432,7 +462,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       armedShape={armedPiece?.shape ?? null}
       canStore={!!sel}
       disabled={!playing}
-      onStore={onStore}
+      onStore={storeGroup}
       onPointerDown={onCardDown("storage")}
       onPointerMove={onCardMove}
       onPointerUp={onCardUp}

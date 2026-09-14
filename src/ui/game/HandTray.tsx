@@ -1,8 +1,9 @@
-import { useState, type PointerEvent } from "react";
+import { useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 import type { Card as CardData, PieceShape } from "../../core/types";
 import Card from "../../components/Card";
 import PieceIcon from "../../components/PieceIcon";
 import { MAX_SHAPE_SPAN } from "../../core/shapes";
+import { dealIn } from "./fly";
 import { pieceColor, toIconCells } from "./palette";
 import "./HandTray.css";
 
@@ -18,13 +19,17 @@ interface HandTrayProps {
 }
 
 type Layout = (number | null)[];
+// deals: 새 손패가 깔린 횟수. 바뀔 때마다 덱에서 날아오는 연출을 튼다
+type State = { slots: Layout; deals: number };
+
+const DEAL_STAGGER_MS = 70;
 
 // 새 손패면 순서대로 채우고, 배치로 빠진 카드는 자리만 비운다
-function nextLayout(prev: Layout, hand: CardData[], handSize: number): Layout {
+function nextLayout(prev: State, hand: CardData[], handSize: number): State {
   const ids = hand.map((c) => c.pieceId);
-  const isNewHand = ids.some((id) => !prev.includes(id));
-  if (isNewHand) return [...ids, ...Array<null>(Math.max(0, handSize - ids.length)).fill(null)];
-  return prev.map((id) => (id !== null && ids.includes(id) ? id : null));
+  const isNewHand = ids.some((id) => !prev.slots.includes(id));
+  if (isNewHand) return { slots: [...ids, ...Array<null>(Math.max(0, handSize - ids.length)).fill(null)], deals: prev.deals + 1 };
+  return { slots: prev.slots.map((id) => (id !== null && ids.includes(id) ? id : null)), deals: prev.deals };
 }
 
 function same(a: Layout, b: Layout): boolean {
@@ -33,13 +38,22 @@ function same(a: Layout, b: Layout): boolean {
 
 // 제시된 손패. 배치한 자리는 빈 슬롯으로 남겨 카드 위치가 흔들리지 않게 한다
 function HandTray({ hand, handSize, armedIndex, armedShape, disabled, onPointerDown, onPointerMove, onPointerUp }: HandTrayProps) {
-  const [layout, setLayout] = useState<Layout>(() => nextLayout([], hand, handSize));
-  const computed = nextLayout(layout, hand, handSize);
-  if (!same(computed, layout)) setLayout(computed);
+  const [state, setState] = useState<State>(() => nextLayout({ slots: [], deals: 0 }, hand, handSize));
+  const computed = nextLayout(state, hand, handSize);
+  if (!same(computed.slots, state.slots)) setState(computed);
+  const root = useRef<HTMLDivElement>(null);
+
+  // 새 손패가 깔리면 각 카드가 덱에서 순서대로 날아온다
+  useLayoutEffect(() => {
+    const deck = document.querySelector(".deck__stack");
+    if (!deck || !root.current) return;
+    const from = deck.getBoundingClientRect();
+    root.current.querySelectorAll<HTMLElement>(".ss-card:not(.is-flying)").forEach((el, i) => dealIn(el, from, i * DEAL_STAGGER_MS));
+  }, [state.deals]);
 
   return (
-    <div className="hand" style={{ gridTemplateColumns: `repeat(${computed.length}, 1fr)` }}>
-      {computed.map((id, slot) => {
+    <div ref={root} className="hand" style={{ gridTemplateColumns: `repeat(${computed.slots.length}, 1fr)` }}>
+      {computed.slots.map((id, slot) => {
         const handIndex = hand.findIndex((c) => c.pieceId === id);
         const card = handIndex >= 0 ? hand[handIndex] : null;
         if (!card) return <div key={`empty-${slot}`} className="hand__empty" aria-hidden="true" />;
