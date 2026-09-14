@@ -28,6 +28,9 @@ const RAW: Record<string, [number, number][]> = {
 
 export const SHAPE_IDS = Object.keys(RAW);
 
+// 도형 격자의 긴 변 최대값. 카드·보관함 아이콘을 이 크기의 정사각 격자에 그린다
+export const MAX_SHAPE_SPAN = Math.max(...Object.values(RAW).flat().flat()) + 1;
+
 export const SHAPE_CATALOG: Record<string, PieceShape> = Object.fromEntries(
   Object.entries(RAW).map(([id, cells]) => [id, makeShape(id, cells.map(([r, c]) => ({ r, c })))]),
 );

@@ -20,6 +20,7 @@ import { createGame, reduce } from "../../core/game";
 import { remainingTargets } from "../../core/rules";
 import { grabCell, rotateShape } from "../../core/shapes";
 import Button from "../../components/Button";
+import IconButton from "../../components/IconButton";
 import Panel from "../../components/Panel";
 import BoardGrid, { type Ghost } from "./BoardGrid";
 import CollectionTray from "./CollectionTray";
@@ -28,6 +29,7 @@ import HandTray from "./HandTray";
 import InfoPanel from "./InfoPanel";
 import ResultOverlay from "./ResultOverlay";
 import StoragePanel from "./StoragePanel";
+import { useMediaQuery } from "../useMediaQuery";
 import "./GameScreen.css";
 
 interface GameScreenProps {
@@ -59,6 +61,7 @@ interface FrameDrag {
 }
 
 const DRAG_THRESHOLD_PX = 6;
+const MOBILE_QUERY = "(max-width: 900px)";
 const TOUCH_LIFT_ROWS = 1;
 
 function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
@@ -69,6 +72,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const cardDrag = useRef<CardDrag | null>(null);
   const frameDrag = useRef<FrameDrag | null>(null);
   const [isTouch, setIsTouch] = useState(false);
+  const isMobile = useMediaQuery(MOBILE_QUERY);
   // 집어 든 조각의 시계 방향 90도 회전 횟수. 다른 조각을 집거나 내려놓으면 0으로 돌아간다
   const [rotation, setRotation] = useState(0);
 
@@ -127,6 +131,8 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       color: armedPiece.color,
     };
   }, [armedPiece, hover, anchorFor, game.board]);
+
+  const rotate = () => setRotation((r) => (r + 1) % 4);
 
   const disarm = useCallback(() => {
     setArmed(null);
@@ -202,7 +208,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       if (cell) tryPlace(cell);
       disarm();
     } else if (d.wasArmed) {
-      setRotation((r) => (r + 1) % 4);
+      rotate();
     }
   };
 
@@ -346,42 +352,154 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
 
   const sel = game.selection;
 
+  const deckCard = (
+    <DeckCard
+      remaining={game.deck.pending.length}
+      recycled={game.deck.recycled.length}
+      disabled={
+        !playing || remainingCount(game.deck) + game.deck.hand.length === 0
+      }
+      onClick={() => {
+        disarm();
+        dispatch({ type: "PASS_HAND" });
+      }}
+    />
+  );
+  const undoButton = (
+    <Button
+      disabled={!game.prev}
+      onClick={() => {
+        disarm();
+        dispatch({ type: "UNDO" });
+      }}
+    >
+      되돌리기
+    </Button>
+  );
+  const handTray = (
+    <HandTray
+      hand={game.deck.hand}
+      handSize={config.handSize}
+      armedIndex={activeArmed?.source === "hand" ? activeArmed.index : null}
+      armedShape={armedPiece?.shape ?? null}
+      disabled={!playing}
+      onPointerDown={onCardDown("hand")}
+      onPointerMove={onCardMove}
+      onPointerUp={onCardUp}
+    />
+  );
+  const trays = game.collection.map((track) => (
+    <CollectionTray
+      key={track.color}
+      track={track}
+      targetSizes={config.targetSizes}
+    />
+  ));
+  const boardGrid = (
+    <BoardGrid
+      board={game.board}
+      selection={game.selection}
+      ghost={ghost}
+      gridRef={gridRef}
+      onPointerDown={onBoardDown}
+      onPointerMove={onBoardMove}
+      onPointerUp={onBoardUp}
+      onPointerLeave={onBoardLeave}
+    />
+  );
+  const boardFoot = (
+    <p className="board__foot">
+      <span className="board__size">
+        {game.board.rows} × {game.board.cols}
+      </span>
+    </p>
+  );
+  const storagePanel = config.storageEnabled && (
+    <StoragePanel
+      storage={game.storage}
+      armedIndex={activeArmed?.source === "storage" ? activeArmed.index : null}
+      armedShape={armedPiece?.shape ?? null}
+      canStore={!!sel}
+      disabled={!playing}
+      onStore={onStore}
+      onPointerDown={onCardDown("storage")}
+      onPointerMove={onCardMove}
+      onPointerUp={onCardUp}
+    />
+  );
+  const result = !playing && (
+    <ResultOverlay
+      status={game.status}
+      score={game.score}
+      recycleCount={game.deck.recycleCount}
+      onExit={onExit}
+    />
+  );
+
+  if (isMobile) {
+    const stats = [
+      ...infoRows.filter((r) => !r.strong),
+      { label: "카드", value: String(game.deck.pending.length) },
+    ];
+    return (
+      <main className="game game--mobile" onPointerDown={onGamePointerDown}>
+        <header className="m-head">
+          <IconButton label="나가기" className="m-head__back" onClick={onExit}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 5l-7 7 7 7" />
+            </svg>
+          </IconButton>
+          <h1 className="m-head__title">SHAPE SPIDER</h1>
+          <Panel tone="gold" className="m-head__score">
+            <span>점수</span>
+            <strong>{game.score.total.toLocaleString()}</strong>
+          </Panel>
+        </header>
+        <ul className="m-stats">
+          {stats.map((r) => (
+            <li key={r.label}>
+              {r.label} <strong>{r.value}</strong>
+            </li>
+          ))}
+        </ul>
+        <div className="m-hand">
+          {deckCard}
+          {handTray}
+        </div>
+        <Panel tone="wood" className="board board--mobile">
+          {boardGrid}
+          {boardFoot}
+        </Panel>
+        <div className="m-bottom">
+          <Panel tone="wood" className="m-trays">
+            {trays}
+          </Panel>
+          {storagePanel}
+        </div>
+        <div className="m-actions">
+          {undoButton}
+          <Button
+            variant="primary"
+            disabled={!activeArmed}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={rotate}
+          >
+            회전
+          </Button>
+        </div>
+        {result}
+      </main>
+    );
+  }
+
   return (
     <main className="game" onPointerDown={onGamePointerDown}>
       <header className="game__top">
         <div className="game__deck">
-          <DeckCard
-            remaining={game.deck.pending.length}
-            recycled={game.deck.recycled.length}
-            disabled={
-              !playing ||
-              remainingCount(game.deck) + game.deck.hand.length === 0
-            }
-            onClick={() => {
-              disarm();
-              dispatch({ type: "PASS_HAND" });
-            }}
-          />
-          <Button
-            disabled={!game.prev}
-            onClick={() => {
-              disarm();
-              dispatch({ type: "UNDO" });
-            }}
-          >
-            되돌리기
-          </Button>
+          {deckCard}
+          {undoButton}
         </div>
-        <HandTray
-          hand={game.deck.hand}
-          handSize={config.handSize}
-          armedIndex={activeArmed?.source === "hand" ? activeArmed.index : null}
-          armedShape={armedPiece?.shape ?? null}
-          disabled={!playing}
-          onPointerDown={onCardDown("hand")}
-          onPointerMove={onCardMove}
-          onPointerUp={onCardUp}
-        />
+        {handTray}
         <div className="game__info">
           <InfoPanel rows={infoRows} />
           <button
@@ -396,15 +514,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       </header>
 
       <section className="game__middle">
-        <aside className="game__side game__side--left">
-          {game.collection.map((track) => (
-            <CollectionTray
-              key={track.color}
-              track={track}
-              targetSizes={config.targetSizes}
-            />
-          ))}
-        </aside>
+        <aside className="game__side game__side--left">{trays}</aside>
 
         <Panel tone="wood" className="board">
           <h1 className="board__title">
@@ -412,50 +522,14 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
             SHAPE SPIDER
             <span className="board__rule" />
           </h1>
-          <BoardGrid
-            board={game.board}
-            selection={game.selection}
-            ghost={ghost}
-            gridRef={gridRef}
-            onPointerDown={onBoardDown}
-            onPointerMove={onBoardMove}
-            onPointerUp={onBoardUp}
-            onPointerLeave={onBoardLeave}
-          />
-          <p className="board__foot">
-            <span className="board__size">
-              {game.board.rows} × {game.board.cols}
-            </span>
-          </p>
+          {boardGrid}
+          {boardFoot}
         </Panel>
 
-        <aside className="game__side">
-          {config.storageEnabled && (
-            <StoragePanel
-              storage={game.storage}
-              armedIndex={
-                activeArmed?.source === "storage" ? activeArmed.index : null
-              }
-              armedShape={armedPiece?.shape ?? null}
-              canStore={!!sel}
-              disabled={!playing}
-              onStore={onStore}
-              onPointerDown={onCardDown("storage")}
-              onPointerMove={onCardMove}
-              onPointerUp={onCardUp}
-            />
-          )}
-        </aside>
+        <aside className="game__side">{storagePanel}</aside>
       </section>
 
-      {!playing && (
-        <ResultOverlay
-          status={game.status}
-          score={game.score}
-          recycleCount={game.deck.recycleCount}
-          onExit={onExit}
-        />
-      )}
+      {result}
     </main>
   );
 }

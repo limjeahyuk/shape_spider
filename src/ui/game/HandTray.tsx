@@ -2,11 +2,9 @@ import { useState, type PointerEvent } from "react";
 import type { Card as CardData, PieceShape } from "../../core/types";
 import Card from "../../components/Card";
 import PieceIcon from "../../components/PieceIcon";
+import { MAX_SHAPE_SPAN } from "../../core/shapes";
 import { pieceColor, toIconCells } from "./palette";
 import "./HandTray.css";
-
-// 손패 아이콘은 가장 큰 도형 기준 고정 격자에 그린다
-const MAX_SPAN = 5;
 
 interface HandTrayProps {
   hand: CardData[];
@@ -60,7 +58,7 @@ function HandTray({ hand, handSize, armedIndex, armedShape, disabled, onPointerD
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           >
-            <PieceIcon cells={toIconCells(shape.cells)} color={p.color} shade={p.shade} span={MAX_SPAN} />
+            <PieceIcon cells={toIconCells(shape.cells)} color={p.color} shade={p.shade} span={MAX_SHAPE_SPAN} />
           </Card>
         );
       })}

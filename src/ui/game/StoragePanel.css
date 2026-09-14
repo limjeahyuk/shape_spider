@@ -68,6 +68,10 @@
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
+.storage__slot .ss-piece {
+  width: 120px;
+  aspect-ratio: 1;
+}
 .storage__size {
   font-size: 11px;
   color: var(--color-tan);
