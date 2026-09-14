@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   useCallback,
   useEffect,
   useMemo,
@@ -18,7 +19,7 @@ import { at, canPlace, connectedGroup, shapeCellsAt, squareCells } from "../../c
 import { remainingCount } from "../../core/deck";
 import { createGame, reduce } from "../../core/game";
 import { remainingTargets } from "../../core/rules";
-import { grabCell, rotateShape } from "../../core/shapes";
+import { grabCell, rotateShape, shapeBounds } from "../../core/shapes";
 import Button from "../../components/Button";
 import IconButton from "../../components/IconButton";
 import Panel from "../../components/Panel";
@@ -28,6 +29,7 @@ import DeckCard from "./DeckCard";
 import { cellsNode, boundsOf, fly } from "./fly";
 import HandTray from "./HandTray";
 import InfoPanel from "./InfoPanel";
+import { pieceColor } from "./palette";
 import ResultOverlay from "./ResultOverlay";
 import StoragePanel from "./StoragePanel";
 import { useMediaQuery } from "../useMediaQuery";
@@ -136,6 +138,21 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
 
   const rotate = () => setRotation((r) => (r + 1) % 4);
 
+  // ── 집어 든 조각을 포인터에 붙여 보여준다. 리렌더 없이 transform만 갱신 ──
+  const cursorEl = useRef<HTMLDivElement>(null);
+  const lastPointer = useRef({ x: 0, y: 0 });
+  const moveCursor = useCallback((x: number, y: number) => {
+    lastPointer.current = { x, y };
+    if (cursorEl.current) cursorEl.current.style.transform = `translate(${x}px, ${y}px)`;
+  }, []);
+  useEffect(() => {
+    if (!armedPiece) return;
+    moveCursor(lastPointer.current.x, lastPointer.current.y);
+    const onMove = (e: PointerEvent) => moveCursor(e.clientX, e.clientY);
+    window.addEventListener("pointermove", onMove);
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [armedPiece, moveCursor]);
+
   const disarm = useCallback(() => {
     setArmed(null);
     setHover(null);
@@ -213,6 +230,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       if (!playing || e.button !== 0) return;
       e.currentTarget.setPointerCapture(e.pointerId);
       setIsTouch(e.pointerType === "touch");
+      moveCursor(e.clientX, e.clientY);
       const wasArmed = armed?.source === source && armed.index === index;
       if (!wasArmed) setRotation(0);
       cardDrag.current = {
@@ -468,6 +486,28 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       onPointerUp={onCardUp}
     />
   );
+  const cursorPiece = armedPiece && (() => {
+    const { shape, color } = armedPiece;
+    const g = grabCell(shape);
+    const b = shapeBounds(shape);
+    const p = pieceColor(color);
+    const style = {
+      gridTemplateRows: `repeat(${b.rows}, var(--cell))`,
+      gridTemplateColumns: `repeat(${b.cols}, var(--cell))`,
+      "--grab-r": g.r,
+      "--grab-c": g.c,
+      "--lift": isTouch ? TOUCH_LIFT_ROWS : 0,
+      "--piece-color": p.color,
+      "--piece-shade": p.shade,
+    } as CSSProperties;
+    return (
+      <div ref={cursorEl} className="drag-piece" style={style} aria-hidden="true">
+        {shape.cells.map((q) => (
+          <span key={`${q.r}-${q.c}`} style={{ gridArea: `${q.r + 1} / ${q.c + 1}` }} />
+        ))}
+      </div>
+    );
+  })();
   const result = !playing && (
     <ResultOverlay
       status={game.status}
@@ -531,6 +571,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
           </Panel>
           {storagePanel}
         </div>
+        {cursorPiece}
         {result}
       </main>
     );
@@ -573,6 +614,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
         <aside className="game__side">{storagePanel}</aside>
       </section>
 
+      {cursorPiece}
       {result}
     </main>
   );
