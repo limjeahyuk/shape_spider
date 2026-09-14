@@ -70,15 +70,6 @@
 .board__size {
   letter-spacing: 0.1em;
 }
-.board__hint {
-  flex: 1;
-  text-align: right;
-  color: var(--color-cream-soft);
-  transition: color 0.15s ease;
-}
-.board__hint.is-notice {
-  color: var(--color-select-invalid);
-}
 
 .game__side {
   display: flex;

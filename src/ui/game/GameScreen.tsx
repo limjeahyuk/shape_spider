@@ -17,7 +17,7 @@ import { DIFFICULTY_LABEL } from "../../core/config";
 import { at, canPlace, shapeCellsAt } from "../../core/board";
 import { remainingCount } from "../../core/deck";
 import { createGame, reduce } from "../../core/game";
-import { collectTarget, remainingTargets } from "../../core/rules";
+import { remainingTargets } from "../../core/rules";
 import { grabCell } from "../../core/shapes";
 import Button from "../../components/Button";
 import Panel from "../../components/Panel";
@@ -28,7 +28,6 @@ import HandTray from "./HandTray";
 import InfoPanel from "./InfoPanel";
 import ResultOverlay from "./ResultOverlay";
 import StoragePanel from "./StoragePanel";
-import { pieceColor } from "./palette";
 import "./GameScreen.css";
 
 interface GameScreenProps {
@@ -61,26 +60,17 @@ interface FrameDrag {
 
 const DRAG_THRESHOLD_PX = 6;
 const TOUCH_LIFT_ROWS = 1;
-const NOTICE_MS = 1800;
 
 function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const [game, dispatch] = useReducer(reduce, config, createGame);
   const [armed, setArmed] = useState<Armed | null>(null);
   const [hover, setHover] = useState<Coord | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const cardDrag = useRef<CardDrag | null>(null);
   const frameDrag = useRef<FrameDrag | null>(null);
   const [isTouch, setIsTouch] = useState(false);
-  const noticeTimer = useRef<number | undefined>(undefined);
 
   const playing = game.status === "playing";
-
-  const showNotice = useCallback((text: string) => {
-    setNotice(text);
-    window.clearTimeout(noticeTimer.current);
-    noticeTimer.current = window.setTimeout(() => setNotice(null), NOTICE_MS);
-  }, []);
 
   // 포인터 좌표를 DOM 탐색 없이 산술로 칸 좌표로 바꾼다
   const cellFromPoint = useCallback(
@@ -206,7 +196,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     setIsTouch(e.pointerType === "touch");
 
     if (armedPiece) {
-      if (!tryPlace(cell)) showNotice("여기에는 놓을 수 없습니다");
+      tryPlace(cell);
       disarm();
       return;
     }
@@ -230,17 +220,10 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       return;
     }
 
-    const target = at(game.board, cell.r, cell.c);
-    if (!target) {
+    if (!at(game.board, cell.r, cell.c)) {
       dispatch({ type: "CANCEL_SELECTION" });
       return;
     }
-    // 프레임을 못 띄우는 경우에도 pick 선택은 되므로 안내만 띄운다
-    const { size, candidates } = collectTarget(game.board, game.collection, target.color);
-    const name = pieceColor(target.color).name;
-    if (size === null) showNotice(`${name} 수집함은 이미 가득 찼습니다`);
-    else if (candidates.length === 0)
-      showNotice(`${name} ${size}×${size} 정사각형이 아직 없습니다`);
     dispatch({ type: "BEGIN_SELECTION", cell });
   };
 
@@ -339,13 +322,6 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   ];
 
   const sel = game.selection;
-  const hint = armedPiece
-    ? "판 위를 클릭하거나 끌어다 놓으세요"
-    : sel?.kind === "collect"
-      ? `${pieceColor(sel.color).name} ${sel.size}×${sel.size} — 프레임을 끌어 위치를 정하고 클릭해 수집`
-      : sel?.kind === "pick"
-        ? `${pieceColor(sel.color).name} 덩어리 ${sel.group.length}칸 — 보관함으로 옮길 수 있습니다`
-        : "카드를 집어 판에 놓거나, 판의 색 칸을 눌러 정사각형을 뽑으세요";
 
   return (
     <main className="game">
@@ -387,7 +363,6 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
             <span className="board__size">
               {game.board.rows} × {game.board.cols}
             </span>
-            {/* <span className={`board__hint ${notice ? "is-notice" : ""}`}>{notice ?? hint}</span> */}
           </p>
         </Panel>
 
