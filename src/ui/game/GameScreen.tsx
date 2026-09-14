@@ -79,15 +79,16 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const playing = game.status === "playing";
 
   // 포인터 좌표를 DOM 탐색 없이 산술로 칸 좌표로 바꾼다
+  // extraRows: 터치 드래그는 조각을 손가락 위로 올리므로 판 아래쪽을 그만큼 더 허용한다
   const cellFromPoint = useCallback(
-    (x: number, y: number): Coord | null => {
+    (x: number, y: number, extraRows = 0): Coord | null => {
       const el = gridRef.current;
       if (!el) return null;
       const rect = el.getBoundingClientRect();
       const size = rect.width / game.board.cols;
       const c = Math.floor((x - rect.left) / size);
       const r = Math.floor((y - rect.top) / size);
-      if (r < 0 || c < 0 || r >= game.board.rows || c >= game.board.cols)
+      if (r < 0 || c < 0 || r >= game.board.rows + extraRows || c >= game.board.cols)
         return null;
       return { r, c };
     },
@@ -188,6 +189,8 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       if (game.selection) dispatch({ type: "CANCEL_SELECTION" });
     };
 
+  const dragLift = isTouch ? TOUCH_LIFT_ROWS : 0;
+
   const onCardMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
     const d = cardDrag.current;
     if (!d || d.pointerId !== e.pointerId) return;
@@ -196,7 +199,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       Math.hypot(e.clientX - d.startX, e.clientY - d.startY) > DRAG_THRESHOLD_PX
     )
       d.moved = true;
-    if (d.moved) setHover(cellFromPoint(e.clientX, e.clientY));
+    if (d.moved) setHover(cellFromPoint(e.clientX, e.clientY, dragLift));
   };
 
   const onCardUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -204,7 +207,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     if (!d || d.pointerId !== e.pointerId) return;
     cardDrag.current = null;
     if (d.moved) {
-      const cell = cellFromPoint(e.clientX, e.clientY);
+      const cell = cellFromPoint(e.clientX, e.clientY, dragLift);
       if (cell) tryPlace(cell);
       disarm();
     } else if (d.wasArmed) {
