@@ -62,6 +62,11 @@ export function removeCells(board: Board, targets: Coord[]): Board {
   return { ...board, cells };
 }
 
+// 해당 색의 칸을 전부 비운다 (색상 완성 시 정리)
+export function removeColor(board: Board, color: ColorId): Board {
+  return { ...board, cells: board.cells.map((cell) => (cell?.color === color ? null : cell)) };
+}
+
 export function squareCells(anchor: Coord, size: number): Coord[] {
   const out: Coord[] = [];
   for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) out.push({ r: anchor.r + r, c: anchor.c + c });

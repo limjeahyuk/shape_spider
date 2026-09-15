@@ -1,5 +1,5 @@
-import type { Coord, GameConfig, GameState, Snapshot } from "./types";
-import { at, canPlace, connectedGroup, createBoard, extract, place, removeCells, snapToNearestValid, squareCells } from "./board";
+import type { Card, ColorId, Coord, GameConfig, GameState, Snapshot } from "./types";
+import { at, canPlace, connectedGroup, createBoard, extract, place, removeCells, removeColor, snapToNearestValid, squareCells } from "./board";
 import { createDeck, drawHand, passHand, type Rng } from "./deck";
 import { addBonus, applyRecyclePenalty, collectTarget, computeTotal, createTracks, isCleared, isStuck, rawTotal, scoreSquare } from "./rules";
 import { makeShape, rotateShape } from "./shapes";
@@ -46,6 +46,18 @@ function tickLocks(locks: number[]): number[] {
 function snapshot(state: GameState): Snapshot {
   const { prev: _prev, selection: _selection, ...rest } = state;
   return rest;
+}
+
+// 색상 완성 시 보드, 덱, 보관함에 남은 그 색의 도형을 전부 제거한다 (「정사각형 완성과 수집」)
+function purgeColor(state: GameState, color: ColorId): GameState {
+  const drop = (cards: Card[]) => cards.filter((c) => c.color !== color);
+  const { deck, storage } = state;
+  return {
+    ...state,
+    board: removeColor(state.board, color),
+    deck: { ...deck, pending: drop(deck.pending), hand: drop(deck.hand), recycled: drop(deck.recycled) },
+    storage: { ...storage, slots: storage.slots.map((s) => (s?.color === color ? null : s)) },
+  };
 }
 
 // 종료 판정. 전량 완성 시 보너스는 한 번만 가산한다
@@ -152,9 +164,10 @@ export function reduce(state: GameState, action: GameAction): GameState {
       });
       const { scoring } = state.config;
       let score = computeTotal({ ...state.score, collected: state.score.collected + scoreSquare(scoring, sel.size) });
-      // 이 추출로 해당 색상의 수집함이 다 찼으면 색상 완성 보너스
-      if (collection.find((t) => t.color === sel.color)!.nextSize === null) score = addBonus(score, scoring.trackBonus);
-      return finalize({ ...state, prev: snapshot(state), board, collection, score, selection: null });
+      const next: GameState = { ...state, prev: snapshot(state), board, collection, score, selection: null };
+      // 이 추출로 해당 색상의 수집함이 다 찼으면 색상 완성 보너스와 그 색 전량 제거
+      if (collection.find((t) => t.color === sel.color)!.nextSize !== null) return finalize(next);
+      return finalize(refillIfEmpty(purgeColor({ ...next, score: addBonus(score, scoring.trackBonus) }, sel.color)));
     }
 
     case "CANCEL_SELECTION":
