@@ -22,11 +22,11 @@ function StartScreen({ onStart, onSettings }: StartScreenProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>(DEFAULT_DIFFICULTY);
   // 모바일에서는 난이도를 녹색 패널 밖으로 빼서 가로 한 줄로 놓는다
   const mobile = useMediaQuery("(max-width: 860px)");
-  const sizes = getConfig(difficulty).targetSizes;
+  const { targetSizes: sizes, handSize } = getConfig(difficulty);
   const sizeRange = `${sizes[0]}×${sizes[0]} ~ ${sizes.at(-1)}×${sizes.at(-1)}`;
 
   const steps = [
-    "펼쳐진 카드 5장 중 하나를 골라 조각을 꺼냅니다. 한 번 더 누르면 90도 회전합니다.",
+    `펼쳐진 카드 ${handSize}장 중 하나를 골라 조각을 꺼냅니다. 한 번 더 누르면 90도 회전합니다.`,
     "조립 판에 조각을 놓아 빈틈 없는 정사각형을 만듭니다.",
     `완성한 정사각형은 색깔별 수집함의 ${sizeRange} 칸에 들어갑니다.`,
     "수집함을 다 채우거나 쓸수있는 카드가 없을때 게임이 끝납니다",

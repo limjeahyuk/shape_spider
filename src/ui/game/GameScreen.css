@@ -24,9 +24,19 @@
   gap: 32px;
 }
 .game__top .hand {
-  max-width: 1020px;
-  margin: 0 auto;
+  gap: 12px;
   width: 100%;
+}
+/* 10장이 한 줄에 들어가도록 카드를 세로로 길게 쓴다 */
+.game__top .ss-card {
+  aspect-ratio: 4 / 5;
+  padding: 6px 10px 10px;
+}
+.game__top .ss-card__title {
+  font-size: 18px;
+}
+.game__top .ss-card__meta {
+  font-size: 11px;
 }
 
 /* 가운데: 수집함 · 조립 판 · 보관함 */
@@ -203,7 +213,7 @@
 .m-hand {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  align-items: end;
+  align-items: start;
   gap: 10px;
 }
 .game--mobile .deck__stack {
@@ -247,82 +257,54 @@
   padding: 8px;
   gap: 0;
 }
-.board--mobile .board__foot {
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
-  pointer-events: none;
-  opacity: 0.6;
-}
 .m-bottom {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 88px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: stretch;
   gap: 10px;
 }
-.m-trays {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 8px 10px 10px;
-}
-.m-trays .tray {
-  flex-direction: row;
+/* 모바일 하단: 색상별 다음 목표 칩과 가로 보관함 */
+.m-targets,
+.game--mobile .storage {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr;
   align-items: center;
   gap: 8px;
-  padding: 0;
-  border: none;
-  background: none;
-  box-shadow: none;
+  padding: 10px 10px 12px;
 }
-.m-trays .tray__well {
-  flex: 1;
-  min-width: 0;
-  gap: 5px;
-  padding: 5px;
-}
-.m-trays .tray__slot {
-  flex: 1 1 0;
-  aspect-ratio: auto;
-  height: 28px;
-  font-size: 13px;
-}
-.m-trays .tray__foot {
-  display: contents;
-}
-.m-trays .tray__swatch {
-  order: -1;
-  width: 14px;
-  height: 14px;
-}
-.m-trays .tray__name,
-.m-trays .tray__bar {
-  display: none;
-}
-.m-trays .tray__progress {
-  width: 26px;
-  font-size: 12px;
-  text-align: right;
-}
-.game--mobile .storage {
-  padding: 8px 6px;
-  gap: 6px;
-}
+.m-targets__title,
 .game--mobile .storage__title {
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  margin: 0;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
 }
+.m-targets__well,
 .game--mobile .storage__well {
-  flex: 1;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
   gap: 6px;
   padding: 6px;
 }
+.m-targets__well .tray__slot {
+  flex: 1 1 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+.game--mobile .storage__count {
+  grid-row: 1;
+  grid-column: 2;
+  font-size: 12px;
+}
 .game--mobile .storage__slot {
-  flex: 1;
+  flex: 1 1 0;
   height: auto;
   min-height: 52px;
   gap: 2px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .game--mobile .storage__slot .ss-piece {
   width: 36px;
@@ -330,7 +312,4 @@
 .game--mobile .storage__size {
   font-size: 10px;
   text-align: center;
-}
-.game--mobile .storage__count {
-  font-size: 12px;
 }

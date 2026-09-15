@@ -202,7 +202,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const confirmSelection = useCallback(() => {
     const sel = game.selection;
     if (sel?.kind !== "collect") return;
-    flyCells(squareCells(sel.anchor, sel.size), sel.color, document.querySelector(`.tray[data-color="${sel.color}"] .is-next`));
+    flyCells(squareCells(sel.anchor, sel.size), sel.color, document.querySelector(`[data-color="${sel.color}"] .is-next`));
     dispatch({ type: "CONFIRM_SELECTION" });
   }, [game.selection, flyCells]);
 
@@ -443,6 +443,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     <HandTray
       hand={game.deck.hand}
       handSize={config.handSize}
+      columns={Math.ceil(config.handSize / 2)}
       armedIndex={activeArmed?.source === "hand" ? activeArmed.index : null}
       armedShape={armedPiece?.shape ?? null}
       disabled={!playing}
@@ -567,11 +568,21 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
         </div>
         <Panel tone="wood" className="board board--mobile">
           {boardGrid}
-          {boardFoot}
         </Panel>
         <div className="m-bottom">
-          <Panel tone="wood" className="m-trays">
-            {trays}
+          <Panel tone="wood" className="m-targets">
+            <h2 className="m-targets__title">다음 목표</h2>
+            <Panel tone="green" className="m-targets__well">
+              {game.collection.map((t) => {
+                const p = pieceColor(t.color);
+                const style = { "--piece-color": p.color, "--piece-shade": p.shade } as CSSProperties;
+                return (
+                  <span key={t.color} className="tray__slot is-filled is-next" data-color={t.color} style={style} aria-label={`${p.name} 다음 목표`}>
+                    <span className="is-next">{t.nextSize ?? "✓"}</span>
+                  </span>
+                );
+              })}
+            </Panel>
           </Panel>
           {storagePanel}
         </div>
