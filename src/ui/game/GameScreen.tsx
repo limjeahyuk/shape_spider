@@ -141,20 +141,22 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   // ── 집어 든 조각을 포인터에 붙여 보여준다. 리렌더 없이 transform만 갱신 ──
   const cursorEl = useRef<HTMLDivElement>(null);
   const lastPointer = useRef({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
   const moveCursor = useCallback((x: number, y: number) => {
     lastPointer.current = { x, y };
     if (cursorEl.current) cursorEl.current.style.transform = `translate(${x}px, ${y}px)`;
   }, []);
   useEffect(() => {
-    if (!armedPiece) return;
+    if (!dragging) return;
     moveCursor(lastPointer.current.x, lastPointer.current.y);
     const onMove = (e: PointerEvent) => moveCursor(e.clientX, e.clientY);
     window.addEventListener("pointermove", onMove);
     return () => window.removeEventListener("pointermove", onMove);
-  }, [armedPiece, moveCursor]);
+  }, [dragging, moveCursor]);
 
   const disarm = useCallback(() => {
     setArmed(null);
+    setDragging(false);
     setHover(null);
     setRotation(0);
   }, []);
@@ -254,8 +256,10 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     if (
       !d.moved &&
       Math.hypot(e.clientX - d.startX, e.clientY - d.startY) > DRAG_THRESHOLD_PX
-    )
+    ) {
       d.moved = true;
+      setDragging(true);
+    }
     if (d.moved) setHover(cellFromPoint(e.clientX, e.clientY, dragLift));
   };
 
@@ -486,7 +490,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       onPointerUp={onCardUp}
     />
   );
-  const cursorPiece = armedPiece && (() => {
+  const cursorPiece = armedPiece && dragging && (() => {
     const { shape, color } = armedPiece;
     const g = grabCell(shape);
     const b = shapeBounds(shape);
