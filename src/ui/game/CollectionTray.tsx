@@ -16,6 +16,11 @@ function CollectionTray({ track, targetSizes }: CollectionTrayProps) {
   const style = { "--piece-color": p.color, "--piece-shade": p.shade } as CSSProperties;
   return (
     <Panel tone="wood" className="tray" style={style} data-color={track.color}>
+      {track.nextSize === null ? (
+        <Panel tone="wood" className="tray__well is-done">
+          <span className="tray__pill" aria-label="완료" />
+        </Panel>
+      ) : (
       <Panel tone="green" className="tray__well">
         {targetSizes.map((size) => {
           const filled = track.collected.includes(size);
@@ -27,6 +32,7 @@ function CollectionTray({ track, targetSizes }: CollectionTrayProps) {
           );
         })}
       </Panel>
+      )}
       <div className="tray__foot">
         <span className="tray__swatch" aria-hidden="true" />
         <span className="tray__name">{p.name} 수집함</span>

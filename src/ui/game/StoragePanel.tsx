@@ -13,6 +13,7 @@ function iconSpan(cells: { r: number; c: number }[]): number {
 
 interface StoragePanelProps {
   storage: Storage;
+  cooldown: number; // 잠금 해제까지 올려야 하는 도형 수. 진행 점 개수
   armedIndex: number | null;
   armedShape: PieceShape | null; // 집어 든 조각의 회전된 모양
   canStore: boolean;
@@ -25,7 +26,7 @@ interface StoragePanelProps {
 
 // 임시 보관함. 빈 칸은 선택한 덩어리를 받고, 찬 칸은 손패 카드처럼 다시 꺼내 놓는다
 // 꺼낸 칸은 판에 도형을 쿨타임만큼 올릴 때까지 잠긴다
-function StoragePanel({ storage, armedIndex, armedShape, canStore, disabled, onStore, onPointerDown, onPointerMove, onPointerUp }: StoragePanelProps) {
+function StoragePanel({ storage, cooldown, armedIndex, armedShape, canStore, disabled, onStore, onPointerDown, onPointerMove, onPointerUp }: StoragePanelProps) {
   const used = storage.slots.filter(Boolean).length;
   return (
     <Panel tone="wood" className="storage">
@@ -61,8 +62,22 @@ function StoragePanel({ storage, armedIndex, armedShape, canStore, disabled, onS
             >
               {locked ? (
                 <>
-                  잠김
-                  <span className="storage__size">도형 {storage.locks[i]}개 더 놓기</span>
+                  <span className="storage__lock-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="5" y="11" width="14" height="10" rx="2" />
+                      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                    </svg>
+                  </span>
+                  <span className="storage__lock-text">
+                    <span className="storage__lock-aside">도형 </span>
+                    <strong>{storage.locks[i]}</strong>
+                    <span className="storage__lock-aside">개 배치 후 해제</span>
+                  </span>
+                  <span className="storage__lock-dots" aria-hidden="true">
+                    {Array.from({ length: cooldown }, (_, k) => (
+                      <i key={k} className={k < cooldown - storage.locks[i] ? "is-on" : ""} />
+                    ))}
+                  </span>
                 </>
               ) : open ? "여기에 보관" : "빈 칸"}
             </button>

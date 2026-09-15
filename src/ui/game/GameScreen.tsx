@@ -571,6 +571,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const storagePanel = config.storageEnabled && (
     <StoragePanel
       storage={game.storage}
+      cooldown={config.storageCooldown}
       armedIndex={activeArmed?.source === "storage" ? activeArmed.index : null}
       armedShape={armedPiece?.shape ?? null}
       canStore={!!sel}
@@ -697,12 +698,12 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
                 return (
                   <span
                     key={t.color}
-                    className="tray__slot is-filled is-next"
+                    className={`tray__slot ${t.nextSize === null ? "is-done" : "is-filled is-next"}`}
                     data-color={t.color}
                     style={style}
-                    aria-label={`${p.name} 다음 목표`}
+                    aria-label={`${p.name} ${t.nextSize === null ? "완료" : "다음 목표"}`}
                   >
-                    <span className="is-next">{t.nextSize ?? "✓"}</span>
+                    {t.nextSize === null ? <span className="tray__pill" /> : <span className="is-next">{t.nextSize}</span>}
                   </span>
                 );
               })}
