@@ -24,10 +24,11 @@
   gap: 32px;
 }
 .game__top .hand {
+  --hand-card: 96px;
   gap: 12px;
-  width: 100%;
+  justify-content: start;
 }
-/* 10장이 한 줄에 들어가도록 카드를 세로로 길게 쓴다 */
+/* 카드는 고정 폭. 창이 좁아지면 크기를 유지한 채 5장씩 2줄로 내려간다 */
 .game__top .ss-card {
   aspect-ratio: 4 / 5;
   padding: 6px 10px 10px;

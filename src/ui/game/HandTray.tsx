@@ -49,7 +49,7 @@ function HandTray({ hand, handSize, columns = Math.ceil(handSize / 2), armedInde
   }, [state.deals]);
 
   return (
-    <div ref={root} className="hand" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+    <div ref={root} className="hand" style={{ gridTemplateColumns: `repeat(${columns}, var(--hand-card, 1fr))` }}>
       {computed.slots.map((id, slot) => {
         const handIndex = hand.findIndex((c) => c.pieceId === id);
         const card = handIndex >= 0 ? hand[handIndex] : null;
