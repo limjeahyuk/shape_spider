@@ -1,6 +1,10 @@
 .game {
   /* 상단 줄과 보드, 양옆 열이 스크롤 없이 한 화면에 들어오도록 맞춘다 */
-  --cell: clamp(32px, min(calc((100svh - 390px) / 10), calc((100vw - 690px) / 10)), 76px);
+  --cell: clamp(
+    32px,
+    min(calc((100svh - 390px) / 10), calc((100vw - 690px) / 10)),
+    76px
+  );
   min-height: 100svh;
   box-sizing: border-box;
   display: grid;
@@ -8,8 +12,16 @@
   gap: 18px;
   padding: 18px 28px 22px;
   background:
-    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.04), transparent 60%),
-    radial-gradient(ellipse at 50% 50%, var(--color-bg-mid) 0%, var(--color-bg-deep) 100%);
+    radial-gradient(
+      ellipse at 50% 40%,
+      rgba(255, 255, 255, 0.04),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      var(--color-bg-mid) 0%,
+      var(--color-bg-deep) 100%
+    );
   font-family: var(--font-serif);
   color: var(--color-cream);
   user-select: none;
@@ -148,8 +160,14 @@
 .drag-piece span {
   margin: 1px;
   border-radius: 3px;
-  background: linear-gradient(180deg, var(--piece-color) 0%, var(--piece-shade) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 16px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(
+    180deg,
+    var(--piece-color) 0%,
+    var(--piece-shade) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 8px 16px rgba(0, 0, 0, 0.5);
 }
 
 /* ── 모바일(900px 이하): 세로 한 열 배치 ── */
@@ -231,7 +249,10 @@
 }
 .game--mobile .deck__back {
   gap: 4px;
-  box-shadow: inset 0 0 0 2px var(--color-card-back-deep), inset 0 0 0 3px var(--color-wood-border), 0 4px 8px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 0 0 2px var(--color-card-back-deep),
+    inset 0 0 0 3px var(--color-wood-border),
+    0 4px 8px rgba(0, 0, 0, 0.5);
 }
 .game--mobile .deck__back--under {
   transform: translate(3px, 3px);
@@ -291,13 +312,19 @@
 .m-targets__well .tray__slot > .is-next {
   display: block;
   line-height: 1;
-  height: 1em;
+  height: 18px;
 }
 /* 완료 칩: 목재 배경에 황금 막대 */
 .m-targets__well .tray__slot.is-done {
   border: 1px solid var(--color-wood-border);
-  background: linear-gradient(180deg, var(--color-wood-light), var(--color-wood));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 3px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(
+    180deg,
+    var(--color-wood-light),
+    var(--color-wood)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 2px 3px rgba(0, 0, 0, 0.4);
 }
 .m-targets__well .tray__pill {
   width: 60%;
@@ -308,7 +335,11 @@
 .game--mobile .storage__slot.is-locked {
   flex-direction: row;
   gap: 6px;
-  background: linear-gradient(180deg, var(--color-wood-light), var(--color-wood));
+  background: linear-gradient(
+    180deg,
+    var(--color-wood-light),
+    var(--color-wood)
+  );
 }
 .game--mobile .storage__lock-icon {
   width: auto;
