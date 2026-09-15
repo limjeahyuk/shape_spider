@@ -68,3 +68,56 @@ export function cellsNode(cells: Coord[], color: number): HTMLElement {
   }
   return el;
 }
+
+const POP = [
+  { transform: "none", opacity: 1, filter: "brightness(1)" },
+  { transform: "scale(1.35)", opacity: 1, filter: "brightness(1.8)", offset: 0.35 },
+  { transform: "scale(0)", opacity: 0 },
+];
+const WAVE = [
+  { transform: "none", opacity: 1, filter: "brightness(1)" },
+  { transform: "scale(1.1)", opacity: 1, filter: "brightness(1.6)", offset: 0.3 },
+  { transform: "scale(0)", opacity: 0 },
+];
+// 칸당 지연(ms). pop은 정사각형 수집, wave는 색상 완성 소멸
+const BURST = { pop: { frames: POP, ms: 420, stagger: 45 }, wave: { frames: WAVE, ms: 300, stagger: 52 } };
+
+// 판 위 칸 집합을 제자리에서 터뜨린다. origin에서 가까운 칸부터 순서대로 사라진다
+export function burstCells(cells: Coord[], color: number, from: DOMRect, origin: Coord, style: keyof typeof BURST, delay = 0): void {
+  if (cells.length === 0) return;
+  const { frames, ms, stagger } = BURST[style];
+  const node = cellsNode(cells, color);
+  Object.assign(node.style, { position: "fixed", left: `${from.left}px`, top: `${from.top}px`, width: `${from.width}px`, height: `${from.height}px`, zIndex: "100", pointerEvents: "none" });
+  node.classList.add("is-flying");
+  document.body.append(node);
+  const spans = node.querySelectorAll<HTMLElement>("span");
+  const done = cells.map((q, i) => {
+    const d = reduced() ? 0 : delay + Math.hypot(q.r - origin.r, q.c - origin.c) * stagger;
+    return spans[i].animate(frames, { duration: reduced() ? 0 : ms, delay: d, easing: EASE, fill: "forwards" }).finished;
+  });
+  Promise.all(done).then(() => node.remove());
+}
+
+// 색상 완성 시 origin 화면 좌표에서 퍼지는 링
+export function ripple(x: number, y: number, radius: number, delay = 0): void {
+  const el = document.createElement("div");
+  el.className = "burst-ring";
+  Object.assign(el.style, { left: `${x}px`, top: `${y}px` });
+  document.body.append(el);
+  el.animate(
+    [{ width: "0px", height: "0px", opacity: 0.9 }, { width: `${radius * 2}px`, height: `${radius * 2}px`, opacity: 0 }],
+    { duration: reduced() ? 0 : 700, delay: reduced() ? 0 : delay, easing: "ease-out", fill: "forwards" },
+  ).finished.then(() => el.remove());
+}
+
+// 카드·보관함 칸 등 요소를 제자리에서 튀어 사라지게 한다 (복제본을 띄우므로 원본은 바로 제거해도 된다)
+export function popOut(el: HTMLElement, delay = 0): void {
+  const r = el.getBoundingClientRect();
+  const node = el.cloneNode(true) as HTMLElement;
+  Object.assign(node.style, { position: "fixed", left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, margin: "0", zIndex: "100", pointerEvents: "none" });
+  node.classList.add("is-flying");
+  document.body.append(node);
+  node
+    .animate([{ transform: "none", opacity: 1 }, { transform: "scale(1.18)", opacity: 1, offset: 0.4 }, { transform: "scale(0.4)", opacity: 0 }], { duration: reduced() ? 0 : 380, delay: reduced() ? 0 : delay, easing: EASE, fill: "forwards" })
+    .finished.then(() => node.remove());
+}

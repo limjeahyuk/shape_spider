@@ -26,7 +26,7 @@ import Panel from "../../components/Panel";
 import BoardGrid, { type Ghost } from "./BoardGrid";
 import CollectionTray from "./CollectionTray";
 import DeckCard from "./DeckCard";
-import { cellsNode, boundsOf, fly } from "./fly";
+import { burstCells, cellsNode, boundsOf, fly, popOut, ripple } from "./fly";
 import HandTray from "./HandTray";
 import InfoPanel from "./InfoPanel";
 import { pieceColor } from "./palette";
@@ -63,6 +63,8 @@ interface FrameDrag {
   moved: boolean;
 }
 
+// 색상 완성 소멸이 정사각형 팝 뒤에 시작하는 간격
+const WAVE_DELAY_MS = 300;
 const DRAG_THRESHOLD_PX = 6;
 const MOBILE_QUERY = "(max-width: 900px)";
 const TOUCH_LIFT_ROWS = 1;
@@ -185,26 +187,51 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     [armed, armedPiece, anchorFor, rotation, game.board],
   );
 
-  // ── 연출: 판 위 칸 집합을 to 요소로 날린다 ──
-  const flyCells = useCallback(
-    (cells: Coord[], color: number, to: Element | null | undefined) => {
-      const grid = gridRef.current;
-      if (!grid || !to || cells.length === 0) return;
-      const g = grid.getBoundingClientRect();
+  // 판 위 칸 집합이 차지하는 화면 영역
+  const boardRect = useCallback(
+    (cells: Coord[]) => {
+      const g = gridRef.current!.getBoundingClientRect();
       const size = g.width / game.board.cols;
       const b = boundsOf(cells);
-      const from = new DOMRect(g.left + b.c0 * size, g.top + b.r0 * size, (b.c1 - b.c0 + 1) * size, (b.r1 - b.r0 + 1) * size);
-      fly(cellsNode(cells, color), from, to.getBoundingClientRect());
+      return new DOMRect(g.left + b.c0 * size, g.top + b.r0 * size, (b.c1 - b.c0 + 1) * size, (b.r1 - b.r0 + 1) * size);
     },
     [game.board.cols],
   );
 
+  // ── 연출: 판 위 칸 집합을 to 요소로 날린다 ──
+  const flyCells = useCallback(
+    (cells: Coord[], color: number, to: Element | null | undefined) => {
+      if (!gridRef.current || !to || cells.length === 0) return;
+      fly(cellsNode(cells, color), boardRect(cells), to.getBoundingClientRect());
+    },
+    [boardRect],
+  );
+
+  // 수집: 정사각형이 중심부터 터진다. 그 색의 마지막 목표였으면 이어서 판·손패·보관함의 잔여 도형이 물결처럼 사라진다
   const confirmSelection = useCallback(() => {
     const sel = game.selection;
-    if (sel?.kind !== "collect") return;
-    flyCells(squareCells(sel.anchor, sel.size), sel.color, document.querySelector(`[data-color="${sel.color}"] .is-next`));
+    if (sel?.kind !== "collect" || !gridRef.current) return;
+    const square = squareCells(sel.anchor, sel.size);
+    const origin = { r: sel.anchor.r + Math.floor(sel.size / 2), c: sel.anchor.c + Math.floor(sel.size / 2) };
+    burstCells(square, sel.color, boardRect(square), origin, "pop");
+    const { targetSizes } = game.config;
+    if (sel.size === targetSizes[targetSizes.length - 1]) {
+      const { board, deck, storage } = game;
+      const inSquare = new Set(square.map((q) => q.r * board.cols + q.c));
+      const rest: Coord[] = [];
+      board.cells.forEach((cell, i) => {
+        if (cell?.color === sel.color && !inSquare.has(i)) rest.push({ r: Math.floor(i / board.cols), c: i % board.cols });
+      });
+      const o = boardRect([origin]);
+      ripple(o.left + o.width / 2, o.top + o.height / 2, Math.hypot(window.innerWidth, window.innerHeight) / 2, WAVE_DELAY_MS);
+      if (rest.length) burstCells(rest, sel.color, boardRect(rest), origin, "wave", WAVE_DELAY_MS);
+      const cards = document.querySelectorAll<HTMLElement>(".hand .ss-card");
+      deck.hand.forEach((c, i) => c.color === sel.color && cards[i] && popOut(cards[i], WAVE_DELAY_MS + i * 60));
+      const slots = document.querySelectorAll<HTMLElement>(".storage__slot");
+      storage.slots.forEach((s, i) => s?.color === sel.color && slots[i] && popOut(slots[i], WAVE_DELAY_MS));
+    }
     dispatch({ type: "CONFIRM_SELECTION" });
-  }, [game.selection, flyCells]);
+  }, [game, boardRect]);
 
   const storeGroup = (slotIndex: number) => {
     const sel = game.selection;
