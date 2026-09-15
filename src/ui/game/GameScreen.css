@@ -24,20 +24,28 @@
   gap: 32px;
 }
 .game__top .hand {
-  grid-template-columns: repeat(auto-fill, 96px);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, 64px);
+  gap: 8px;
   justify-content: start;
+  padding-top: 0;
 }
-/* 카드는 고정 폭. 한 줄에 들어가는 만큼 채우고 나머지는 다음 줄로 내려간다 */
-.game__top .ss-card {
-  aspect-ratio: 4 / 5;
-  padding: 6px 10px 10px;
+/* 카드는 모바일과 같은 정사각형 고정 크기. 한 줄에 들어가는 만큼 채우고 나머지는 다음 줄로 */
+.game .hand__empty,
+.game .ss-card {
+  aspect-ratio: 1;
+  border-radius: 6px;
 }
-.game__top .ss-card__title {
-  font-size: 18px;
+.game .ss-card {
+  padding: 4px 6px 6px;
 }
-.game__top .ss-card__meta {
-  font-size: 11px;
+.game .ss-card.is-selected {
+  transform: translateY(-4px);
+}
+.game .ss-card__title {
+  font-size: 14px;
+}
+.game .ss-card__meta {
+  font-size: 9px;
 }
 
 /* 가운데: 수집함 · 조립 판 · 보관함 */
@@ -235,23 +243,6 @@
 .game--mobile .hand {
   gap: 6px;
   padding-top: 0;
-}
-.game--mobile .hand__empty,
-.game--mobile .ss-card {
-  aspect-ratio: 1;
-  border-radius: 6px;
-}
-.game--mobile .ss-card {
-  padding: 4px 6px 6px;
-}
-.game--mobile .ss-card.is-selected {
-  transform: translateY(-4px);
-}
-.game--mobile .ss-card__title {
-  font-size: 14px;
-}
-.game--mobile .ss-card__meta {
-  font-size: 9px;
 }
 .board--mobile {
   position: relative;
