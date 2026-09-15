@@ -283,17 +283,15 @@
 }
 .m-targets__well .tray__slot {
   flex: 1 1 0;
-  font-size: 20px;
   font-weight: 600;
-  line-height: 1;
   color: var(--color-white);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
+/* 글꼴 여백에 좌우되지 않도록 숫자 상자를 글자 높이로 줄여 가운데 둔다 */
 .m-targets__well .tray__slot > span {
   display: block;
   line-height: 1;
-  /* 세리프 숫자가 아래로 치우쳐 보여 살짝 올린다 */
-  transform: translateY(-1px);
+  height: 1em;
 }
 .game--mobile .storage__count {
   grid-row: 1;
