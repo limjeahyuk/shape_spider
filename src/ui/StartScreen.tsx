@@ -6,6 +6,7 @@ import IconButton from "../components/IconButton";
 import Panel from "../components/Panel";
 import PieceIcon from "../components/PieceIcon";
 import { Color } from "../theme";
+import { useMediaQuery } from "./useMediaQuery";
 import "./StartScreen.css";
 
 // 타이틀 양옆 장식 조각 (X 펜토미노, Z 펜토미노)
@@ -19,6 +20,8 @@ interface StartScreenProps {
 
 function StartScreen({ onStart, onSettings }: StartScreenProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>(DEFAULT_DIFFICULTY);
+  // 모바일에서는 난이도를 녹색 패널 밖으로 빼서 가로 한 줄로 놓는다
+  const mobile = useMediaQuery("(max-width: 860px)");
   const sizes = getConfig(difficulty).targetSizes;
   const sizeRange = `${sizes[0]}×${sizes[0]} ~ ${sizes.at(-1)}×${sizes.at(-1)}`;
 
@@ -28,6 +31,19 @@ function StartScreen({ onStart, onSettings }: StartScreenProps) {
     `완성한 정사각형은 색깔별 수집함의 ${sizeRange} 칸에 들어갑니다.`,
     "수집함을 다 채우거나 쓸수있는 카드가 없을때 게임이 끝납니다",
   ];
+
+  const difficultySection = (
+    <section className="start__difficulty">
+      <h2 className="start__section-title">난이도</h2>
+      <div className="start__difficulty-list" role="group" aria-label="난이도">
+        {DIFFICULTY_ORDER.map((d) => (
+          <Button key={d} selected={difficulty === d} onClick={() => setDifficulty(d)}>
+            {DIFFICULTY_LABEL[d]}
+          </Button>
+        ))}
+      </div>
+    </section>
+  );
 
   return (
     <main className="start">
@@ -58,17 +74,9 @@ function StartScreen({ onStart, onSettings }: StartScreenProps) {
               ))}
             </ol>
           </section>
-          <section className="start__difficulty">
-            <h2 className="start__section-title">난이도</h2>
-            <div className="start__difficulty-list" role="group" aria-label="난이도">
-              {DIFFICULTY_ORDER.map((d) => (
-                <Button key={d} selected={difficulty === d} onClick={() => setDifficulty(d)}>
-                  {DIFFICULTY_LABEL[d]}
-                </Button>
-              ))}
-            </div>
-          </section>
+          {!mobile && difficultySection}
         </Panel>
+        {mobile && difficultySection}
 
         <footer className="start__footer">
           <Button variant="primary" size="lg" className="start__play" onClick={() => onStart(difficulty)}>

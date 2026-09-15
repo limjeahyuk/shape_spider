@@ -134,31 +134,61 @@
 }
 
 @media (max-width: 860px) {
+  .start {
+    padding: 12px;
+  }
   .start__board {
+    min-height: calc(100svh - 24px);
     padding: 28px 20px 32px;
+    gap: 28px;
   }
   .start__title-row {
-    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px 40px;
+  }
+  .start__title {
+    order: 1;
+    width: 100%;
+    text-align: center;
+    font-size: clamp(48px, 15vw, 72px);
+    line-height: 1.15;
+    /* 두 단어를 각각 한 줄에 */
+    word-spacing: 100vw;
+  }
+  .start__tagline {
+    text-align: center;
+    text-wrap: balance;
+    font-size: 16px;
+    letter-spacing: 0.12em;
   }
   .start__info {
     grid-template-columns: 1fr;
-    gap: 20px;
   }
   .start__howto {
     padding-right: 0;
     border-right: none;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--color-panel-green-border);
   }
   .start__difficulty {
     padding-left: 0;
   }
+  .start__difficulty-list {
+    flex-direction: row;
+  }
+  .start__difficulty-list > * {
+    flex: 1;
+    min-width: 0;
+  }
   .start__footer {
-    flex-direction: column;
-    gap: 16px;
+    margin-top: auto;
+    gap: 12px;
+  }
+  .start__play {
+    flex: 1;
   }
   .start__settings {
     position: static;
     transform: none;
+    flex: none;
   }
 }
