@@ -10,7 +10,7 @@ import "./HandTray.css";
 interface HandTrayProps {
   hand: CardData[];
   handSize: number;
-  columns?: number; // 한 줄에 놓을 카드 수. 기본은 절반(10장이면 5장씩 2줄)
+  columns?: number; // 한 줄에 놓을 카드 수. 없으면 CSS(auto-fill)가 정한다
   armedIndex: number | null;
   armedShape: PieceShape | null; // 집어 든 카드의 회전된 모양
   disabled: boolean;
@@ -34,7 +34,7 @@ function nextLayout(prev: State, hand: CardData[], handSize: number): State {
 }
 
 // 제시된 손패. 배치한 자리는 빈 슬롯으로 남겨 카드 위치가 흔들리지 않게 한다
-function HandTray({ hand, handSize, columns = Math.ceil(handSize / 2), armedIndex, armedShape, disabled, onPointerDown, onPointerMove, onPointerUp }: HandTrayProps) {
+function HandTray({ hand, handSize, columns, armedIndex, armedShape, disabled, onPointerDown, onPointerMove, onPointerUp }: HandTrayProps) {
   const [state, setState] = useState<State>(() => nextLayout({ slots: [], deals: 0 }, hand, handSize));
   const computed = nextLayout(state, hand, handSize);
   if (computed !== state) setState(computed);
@@ -49,7 +49,7 @@ function HandTray({ hand, handSize, columns = Math.ceil(handSize / 2), armedInde
   }, [state.deals]);
 
   return (
-    <div ref={root} className="hand" style={{ gridTemplateColumns: `repeat(${columns}, var(--hand-card, 1fr))` }}>
+    <div ref={root} className="hand" style={columns ? { gridTemplateColumns: `repeat(${columns}, 1fr)` } : undefined}>
       {computed.slots.map((id, slot) => {
         const handIndex = hand.findIndex((c) => c.pieceId === id);
         const card = handIndex >= 0 ? hand[handIndex] : null;

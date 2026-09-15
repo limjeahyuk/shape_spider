@@ -24,11 +24,11 @@
   gap: 32px;
 }
 .game__top .hand {
-  --hand-card: 96px;
+  grid-template-columns: repeat(auto-fill, 96px);
   gap: 12px;
   justify-content: start;
 }
-/* 카드는 고정 폭. 창이 좁아지면 크기를 유지한 채 5장씩 2줄로 내려간다 */
+/* 카드는 고정 폭. 한 줄에 들어가는 만큼 채우고 나머지는 다음 줄로 내려간다 */
 .game__top .ss-card {
   aspect-ratio: 4 / 5;
   padding: 6px 10px 10px;

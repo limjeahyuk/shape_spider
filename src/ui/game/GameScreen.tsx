@@ -65,8 +65,6 @@ interface FrameDrag {
 
 const DRAG_THRESHOLD_PX = 6;
 const MOBILE_QUERY = "(max-width: 900px)";
-// 데스크톱에서 고정 폭 카드 10장이 한 줄에 들어가는 너비. 못 들어가면 5장씩 2줄
-const WIDE_HAND_QUERY = "(min-width: 1700px)";
 const TOUCH_LIFT_ROWS = 1;
 
 function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
@@ -78,7 +76,6 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const frameDrag = useRef<FrameDrag | null>(null);
   const [isTouch, setIsTouch] = useState(false);
   const isMobile = useMediaQuery(MOBILE_QUERY);
-  const wideHand = useMediaQuery(WIDE_HAND_QUERY);
   // 집어 든 조각의 시계 방향 90도 회전 횟수. 다른 조각을 집거나 내려놓으면 0으로 돌아간다
   const [rotation, setRotation] = useState(0);
 
@@ -446,7 +443,7 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     <HandTray
       hand={game.deck.hand}
       handSize={config.handSize}
-      columns={wideHand ? config.handSize : Math.ceil(config.handSize / 2)}
+      columns={isMobile ? Math.ceil(config.handSize / 2) : undefined}
       armedIndex={activeArmed?.source === "hand" ? activeArmed.index : null}
       armedShape={armedPiece?.shape ?? null}
       disabled={!playing}
