@@ -9,7 +9,8 @@ export function colorRecipe(config: GameConfig): string[] {
   const raw = sizes.map((s) => config.sizeRatio[s] * config.cardsPerColor);
   const counts = raw.map(Math.floor);
   const byFraction = sizes.map((_, i) => i).sort((a, b) => raw[b] - counts[b] - (raw[a] - counts[a]));
-  for (let k = 0; k < config.cardsPerColor - counts.reduce((a, b) => a + b, 0); k++) counts[byFraction[k]]++;
+  const rest = config.cardsPerColor - counts.reduce((a, b) => a + b, 0);
+  for (let k = 0; k < rest; k++) counts[byFraction[k]]++;
   return sizes.flatMap((size, i) => {
     const ids = config.shapeIds.filter((id) => getShape(id).size === size);
     return Array.from({ length: counts[i] }, (_, j) => ids[j % ids.length]);
