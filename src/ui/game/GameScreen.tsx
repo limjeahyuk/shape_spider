@@ -15,7 +15,13 @@ import type {
   PieceShape,
 } from "../../core/types";
 import { DIFFICULTY_LABEL } from "../../core/config";
-import { at, canPlace, connectedGroup, shapeCellsAt, squareCells } from "../../core/board";
+import {
+  at,
+  canPlace,
+  connectedGroup,
+  shapeCellsAt,
+  squareCells,
+} from "../../core/board";
 import { remainingCount } from "../../core/deck";
 import { createGame, reduce } from "../../core/game";
 import { remainingTargets } from "../../core/rules";
@@ -93,7 +99,12 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       const size = rect.width / game.board.cols;
       const c = Math.floor((x - rect.left) / size);
       const r = Math.floor((y - rect.top) / size);
-      if (r < 0 || c < 0 || r >= game.board.rows + extraRows || c >= game.board.cols)
+      if (
+        r < 0 ||
+        c < 0 ||
+        r >= game.board.rows + extraRows ||
+        c >= game.board.cols
+      )
         return null;
       return { r, c };
     },
@@ -146,7 +157,8 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const [dragging, setDragging] = useState(false);
   const moveCursor = useCallback((x: number, y: number) => {
     lastPointer.current = { x, y };
-    if (cursorEl.current) cursorEl.current.style.transform = `translate(${x}px, ${y}px)`;
+    if (cursorEl.current)
+      cursorEl.current.style.transform = `translate(${x}px, ${y}px)`;
   }, []);
   useEffect(() => {
     if (!dragging) return;
@@ -193,7 +205,12 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       const g = gridRef.current!.getBoundingClientRect();
       const size = g.width / game.board.cols;
       const b = boundsOf(cells);
-      return new DOMRect(g.left + b.c0 * size, g.top + b.r0 * size, (b.c1 - b.c0 + 1) * size, (b.r1 - b.r0 + 1) * size);
+      return new DOMRect(
+        g.left + b.c0 * size,
+        g.top + b.r0 * size,
+        (b.c1 - b.c0 + 1) * size,
+        (b.r1 - b.r0 + 1) * size,
+      );
     },
     [game.board.cols],
   );
@@ -202,7 +219,11 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const flyCells = useCallback(
     (cells: Coord[], color: number, to: Element | null | undefined) => {
       if (!gridRef.current || !to || cells.length === 0) return;
-      fly(cellsNode(cells, color), boardRect(cells), to.getBoundingClientRect());
+      fly(
+        cellsNode(cells, color),
+        boardRect(cells),
+        to.getBoundingClientRect(),
+      );
     },
     [boardRect],
   );
@@ -212,7 +233,10 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
     const sel = game.selection;
     if (sel?.kind !== "collect" || !gridRef.current) return;
     const square = squareCells(sel.anchor, sel.size);
-    const origin = { r: sel.anchor.r + Math.floor(sel.size / 2), c: sel.anchor.c + Math.floor(sel.size / 2) };
+    const origin = {
+      r: sel.anchor.r + Math.floor(sel.size / 2),
+      c: sel.anchor.c + Math.floor(sel.size / 2),
+    };
     burstCells(square, sel.color, boardRect(square), origin, "pop");
     const { targetSizes } = game.config;
     if (sel.size === targetSizes[targetSizes.length - 1]) {
@@ -220,15 +244,37 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       const inSquare = new Set(square.map((q) => q.r * board.cols + q.c));
       const rest: Coord[] = [];
       board.cells.forEach((cell, i) => {
-        if (cell?.color === sel.color && !inSquare.has(i)) rest.push({ r: Math.floor(i / board.cols), c: i % board.cols });
+        if (cell?.color === sel.color && !inSquare.has(i))
+          rest.push({ r: Math.floor(i / board.cols), c: i % board.cols });
       });
       const o = boardRect([origin]);
-      ripple(o.left + o.width / 2, o.top + o.height / 2, Math.hypot(window.innerWidth, window.innerHeight) / 2, WAVE_DELAY_MS);
-      if (rest.length) burstCells(rest, sel.color, boardRect(rest), origin, "wave", WAVE_DELAY_MS);
+      ripple(
+        o.left + o.width / 2,
+        o.top + o.height / 2,
+        Math.hypot(window.innerWidth, window.innerHeight) / 2,
+        WAVE_DELAY_MS,
+      );
+      if (rest.length)
+        burstCells(
+          rest,
+          sel.color,
+          boardRect(rest),
+          origin,
+          "wave",
+          WAVE_DELAY_MS,
+        );
       const cards = document.querySelectorAll<HTMLElement>(".hand .ss-card");
-      deck.hand.forEach((c, i) => c.color === sel.color && cards[i] && popOut(cards[i], WAVE_DELAY_MS + i * 60));
+      deck.hand.forEach(
+        (c, i) =>
+          c.color === sel.color &&
+          cards[i] &&
+          popOut(cards[i], WAVE_DELAY_MS + i * 60),
+      );
       const slots = document.querySelectorAll<HTMLElement>(".storage__slot");
-      storage.slots.forEach((s, i) => s?.color === sel.color && slots[i] && popOut(slots[i], WAVE_DELAY_MS));
+      storage.slots.forEach(
+        (s, i) =>
+          s?.color === sel.color && slots[i] && popOut(slots[i], WAVE_DELAY_MS),
+      );
     }
     dispatch({ type: "CONFIRM_SELECTION" });
   }, [game, boardRect]);
@@ -236,17 +282,29 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
   const storeGroup = (slotIndex: number) => {
     const sel = game.selection;
     if (!sel) return;
-    flyCells(connectedGroup(game.board, sel.origin), sel.color, document.querySelectorAll(".storage__slot")[slotIndex]);
+    flyCells(
+      connectedGroup(game.board, sel.origin),
+      sel.color,
+      document.querySelectorAll(".storage__slot")[slotIndex],
+    );
     dispatch({ type: "STORE_GROUP", cell: sel.origin, slotIndex });
   };
 
   // 손패를 넘기면 남은 카드가 덱으로 날아 돌아간다
   const passHand = () => {
     disarm();
-    const deck = document.querySelector(".deck__stack")?.getBoundingClientRect();
+    const deck = document
+      .querySelector(".deck__stack")
+      ?.getBoundingClientRect();
     if (deck)
       for (const el of document.querySelectorAll<HTMLElement>(".hand .ss-card"))
-        fly(el.cloneNode(true) as HTMLElement, el.getBoundingClientRect(), deck, el.parentElement!, 250);
+        fly(
+          el.cloneNode(true) as HTMLElement,
+          el.getBoundingClientRect(),
+          deck,
+          el.parentElement!,
+          250,
+        );
     dispatch({ type: "PASS_HAND" });
   };
 
@@ -345,8 +403,13 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       return;
     }
     // 정사각형이 없는 덩어리를 다시 누르면 빈 보관함 칸으로 바로 보낸다
-    if (sel?.kind === "pick" && sel.group.some((p) => p.r === cell.r && p.c === cell.c)) {
-      const slotIndex = game.storage.slots.findIndex((s, i) => s === null && game.storage.locks[i] === 0);
+    if (
+      sel?.kind === "pick" &&
+      sel.group.some((p) => p.r === cell.r && p.c === cell.c)
+    ) {
+      const slotIndex = game.storage.slots.findIndex(
+        (s, i) => s === null && game.storage.locks[i] === 0,
+      );
       if (config.storageEnabled && slotIndex >= 0) {
         storeGroup(slotIndex);
         return;
@@ -518,28 +581,39 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       onPointerUp={onCardUp}
     />
   );
-  const cursorPiece = armedPiece && dragging && (() => {
-    const { shape, color } = armedPiece;
-    const g = grabCell(shape);
-    const b = shapeBounds(shape);
-    const p = pieceColor(color);
-    const style = {
-      gridTemplateRows: `repeat(${b.rows}, var(--cell))`,
-      gridTemplateColumns: `repeat(${b.cols}, var(--cell))`,
-      "--grab-r": g.r,
-      "--grab-c": g.c,
-      "--lift": isTouch ? TOUCH_LIFT_ROWS : 0,
-      "--piece-color": p.color,
-      "--piece-shade": p.shade,
-    } as CSSProperties;
-    return (
-      <div ref={cursorEl} className="drag-piece" style={style} aria-hidden="true">
-        {shape.cells.map((q) => (
-          <span key={`${q.r}-${q.c}`} style={{ gridArea: `${q.r + 1} / ${q.c + 1}` }} />
-        ))}
-      </div>
-    );
-  })();
+  const cursorPiece =
+    armedPiece &&
+    dragging &&
+    (() => {
+      const { shape, color } = armedPiece;
+      const g = grabCell(shape);
+      const b = shapeBounds(shape);
+      const p = pieceColor(color);
+      const style = {
+        gridTemplateRows: `repeat(${b.rows}, var(--cell))`,
+        gridTemplateColumns: `repeat(${b.cols}, var(--cell))`,
+        "--grab-r": g.r,
+        "--grab-c": g.c,
+        "--lift": isTouch ? TOUCH_LIFT_ROWS : 0,
+        "--piece-color": p.color,
+        "--piece-shade": p.shade,
+      } as CSSProperties;
+      return (
+        <div
+          ref={cursorEl}
+          className="drag-piece"
+          style={style}
+          aria-hidden="true"
+        >
+          {shape.cells.map((q) => (
+            <span
+              key={`${q.r}-${q.c}`}
+              style={{ gridArea: `${q.r + 1} / ${q.c + 1}` }}
+            />
+          ))}
+        </div>
+      );
+    })();
   const result = !playing && (
     <ResultOverlay
       status={game.status}
@@ -558,7 +632,14 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
       <main className="game game--mobile" onPointerDown={onGamePointerDown}>
         <header className="m-head">
           <IconButton label="나가기" className="m-head__back" onClick={onExit}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M15 5l-7 7 7 7" />
             </svg>
           </IconButton>
@@ -576,7 +657,14 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
               dispatch({ type: "UNDO" });
             }}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M9 14L4 9l5-5" />
               <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
             </svg>
@@ -598,13 +686,22 @@ function GameScreen({ difficulty, config, onExit }: GameScreenProps) {
         </Panel>
         <div className="m-bottom">
           <Panel tone="wood" className="m-targets">
-            <h2 className="m-targets__title">다음 목표</h2>
+            <h2 className="m-targets__title">수집함</h2>
             <Panel tone="green" className="m-targets__well">
               {game.collection.map((t) => {
                 const p = pieceColor(t.color);
-                const style = { "--piece-color": p.color, "--piece-shade": p.shade } as CSSProperties;
+                const style = {
+                  "--piece-color": p.color,
+                  "--piece-shade": p.shade,
+                } as CSSProperties;
                 return (
-                  <span key={t.color} className="tray__slot is-filled is-next" data-color={t.color} style={style} aria-label={`${p.name} 다음 목표`}>
+                  <span
+                    key={t.color}
+                    className="tray__slot is-filled is-next"
+                    data-color={t.color}
+                    style={style}
+                    aria-label={`${p.name} 다음 목표`}
+                  >
                     <span className="is-next">{t.nextSize ?? "✓"}</span>
                   </span>
                 );
